@@ -55,14 +55,14 @@ const AccessCodeModal = ({ open, onOpenChange, onSuccess }: AccessCodeModalProps
         </button>
 
         <div className="flex justify-center mb-6">
-          <div className="w-32 h-32 bg-green-200 rounded-lg flex items-center justify-center">
+          <div className="w-32 h-32 bg-green-100 rounded-lg flex items-center justify-center">
             <span className="text-6xl">🧌</span>
           </div>
         </div>
 
         <DialogHeader>
           <DialogTitle className="text-center text-foreground">
-            Not so fast, gimme your email and password before u change the access code
+            Hey, hey, hey! You thought I would let you pass and play around would you? Give me your access code now!
           </DialogTitle>
         </DialogHeader>
 
