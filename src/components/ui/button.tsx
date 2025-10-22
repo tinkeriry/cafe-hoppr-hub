@@ -10,6 +10,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        cafe: "bg-gradient-to-b from-primary to-primary-dark text-primary-foreground hover:from-primary/90 hover:to-primary-dark/90 shadow-[inset_0_2px_8px_rgba(255,255,255,0.3)] transition-all duration-200",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",

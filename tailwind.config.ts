@@ -18,9 +18,12 @@ export default {
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
+        "background-gradient-start": "hsl(var(--background-gradient-start))",
+        "background-gradient-end": "hsl(var(--background-gradient-end))",
         foreground: "hsl(var(--foreground))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
+          dark: "hsl(var(--primary-dark))",
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
@@ -57,6 +60,10 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+      },
+      fontFamily: {
+        pixel: ['Silkscreen', 'Courier New', 'monospace'],
+        sans: ['Instrument Sans', 'sans-serif'],
       },
       borderRadius: {
         lg: "var(--radius)",
