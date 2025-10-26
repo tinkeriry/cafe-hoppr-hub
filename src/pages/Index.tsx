@@ -40,6 +40,7 @@ const Index = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
   const [activeSort, setActiveSort] = useState<string>("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null);
 
   useEffect(() => {
@@ -148,17 +149,29 @@ const Index = () => {
 
           {/* Search */}
           <div className="flex flex-row gap-2 justify-center items-center relative max-w-xl mx-auto">
-            <div className="flex justify-start items-center relative overflow-hidden gap-2 px-4 py-1 rounded-full border border-[#e5d8c2] bg-white w-full">
+            <div className={`flex justify-start items-center relative gap-2 px-4 py-1 rounded-full border bg-white w-full transition-colors duration-200 ${isSearchFocused ? 'border-2 border-[#668D61]' : 'border border-[#e5d8c2]'}`}>
               <Input
                 type="search"
                 placeholder="Where will you land today?"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
                 className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-auto !text-lg flex-1 bg-transparent"
               />
+
               <div className="flex items-center gap-2">
                 <span className="text-2xl">🔍</span>
               </div>
+
+              {/* No Cafe Message when search is focused */}
+              {isSearchFocused && cafes.length === 0 && (
+                <div className="absolute top-full left-0 right-0 z-40 mt-0.5">
+                  <div className="flex justify-start px-4 py-2 rounded-md border border-[#e5d8c2] bg-white w-full">
+                    <p className="text-[#604926] text-lg w-full text-left font-medium">Gasp! There's no cafe yet 😱</p>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex items-center cursor-pointer relative gap-2 p-3 rounded-full border-2 border-[#746650]" data-sort-icon onClick={(e) => {
               e.stopPropagation();
@@ -172,6 +185,7 @@ const Index = () => {
                 activeSort={activeSort}
               />
             </div>
+
           </div>
         </div>
 
