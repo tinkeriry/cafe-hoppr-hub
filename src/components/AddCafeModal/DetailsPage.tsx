@@ -28,6 +28,14 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ onPrevious, onSubmit, loading
     updateFormData({ [field]: rating });
   };
 
+  const isFormValid = () => {
+    // Required fields: price, seating, signal_strength, electricity
+    return formData.price > 0 && 
+           formData.seating > 0 && 
+           formData.signal_strength > 0 && 
+           formData.electricity > 0;
+  };
+
   const renderStars = (field: keyof typeof formData, currentRating: number) => {
     const stars = [];
     for (let i = 1; i <= 10; i++) {
@@ -88,7 +96,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ onPrevious, onSubmit, loading
         <Button type="button" variant="outline" onClick={onPrevious}>
           Previous
         </Button>
-        <Button type="button" variant="cafe" onClick={onSubmit} disabled={loading}>
+        <Button type="button" variant="cafe" onClick={onSubmit} disabled={!isFormValid() || loading}>
           {loading ? "Submitting..." : "Submit"}
         </Button>
       </div>

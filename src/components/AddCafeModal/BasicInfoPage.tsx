@@ -25,7 +25,8 @@ const BasicInfoPage: React.FC<BasicInfoPageProps> = ({ onNext }) => {
            formData.location_link.trim() !== '' &&
            formData.opening_hour.trim() !== '' &&
            formData.closing_hour.trim() !== '' &&
-           formData.comment.trim() !== '';
+           formData.comment.trim() !== '' &&
+           formData.rating > 0;
   };
 
   const renderStars = () => {
