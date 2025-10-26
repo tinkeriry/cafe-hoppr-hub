@@ -39,6 +39,7 @@ const Index = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
+  const [activeSort, setActiveSort] = useState<string>("");
   const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null);
 
   useEffect(() => {
@@ -106,6 +107,7 @@ const Index = () => {
     }
     
     setFilteredCafes(sortedCafes);
+    setActiveSort(sortType);
   };
 
   return (
@@ -155,15 +157,19 @@ const Index = () => {
                 className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-auto !text-lg flex-1 bg-transparent"
               />
               <div className="flex items-center gap-2">
-                <span className="text-xl">🔍</span>
+                <span className="text-2xl">🔍</span>
               </div>
             </div>
-            <div className="flex items-center cursor-pointer relative gap-2 p-3 rounded-full border-2 border-[#746650]" onClick={() => setShowSortModal(!showSortModal)}>
+            <div className="flex items-center cursor-pointer relative gap-2 p-3 rounded-full border-2 border-[#746650]" data-sort-icon onClick={(e) => {
+              e.stopPropagation();
+              setShowSortModal(!showSortModal);
+            }}>
               <SortIcon className="w-6 h-6 text-[#746650]" />
               <SortModal 
                 isOpen={showSortModal}
                 onClose={() => setShowSortModal(false)}
                 onSort={handleSort}
+                activeSort={activeSort}
               />
             </div>
           </div>

@@ -1,10 +1,36 @@
+import { useEffect, useRef } from "react";
+
 interface SortModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSort: (sortType: string) => void;
+  activeSort?: string;
 }
 
-const SortModal = ({ isOpen, onClose, onSort }: SortModalProps) => {
+const SortModal = ({ isOpen, onClose, onSort, activeSort }: SortModalProps) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        // Check if the click is not on the sort icon
+        const sortIcon = document.querySelector('[data-sort-icon]');
+        if (sortIcon && sortIcon.contains(event.target as Node)) {
+          return; // Don't close if clicking on the sort icon
+        }
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const sortOptions = [
@@ -20,19 +46,25 @@ const SortModal = ({ isOpen, onClose, onSort }: SortModalProps) => {
   };
 
   return (
-    <div className="absolute top-full right-0 mt-2 z-50">
+    <div 
+      ref={modalRef}
+      className="absolute top-full right-0 mt-2 z-50 animate-in slide-in-from-top-2 duration-200"
+    >
       <div
-        className="flex flex-col justify-start items-end relative gap-4 p-4 rounded-2xl bg-white"
+        className="flex flex-col justify-start items-end relative rounded-2xl bg-white"
         style={{ boxShadow: "0px 8px 16px 0 rgba(88,60,49,0.2)" }}
       >
         {sortOptions.map((option, index) => (
-          <p 
+          <div 
             key={index}
-            className="self-stretch flex-grow-0 flex-shrink-0 w-52 text-xl font-medium text-left text-[#604926] cursor-pointer hover:text-[#746650] transition-colors"
+            className="self-stretch flex-grow-0 flex-shrink-0 w-52 text-lg font-medium text-left text-[#604926] cursor-pointer hover:text-[#746650] hover:bg-gray-50 px-3 py-2 rounded-lg transition-all duration-200 ease-in-out flex items-center justify-between"
             onClick={() => handleSort(option)}
           >
-            {option}
-          </p>
+            <span>{option}</span>
+            {activeSort === option && (
+              <span className="text-green-600 text-lg">✓</span>
+            )}
+          </div>
         ))}
       </div>
     </div>
