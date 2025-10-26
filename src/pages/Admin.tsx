@@ -89,59 +89,58 @@ const Admin = () => {
 
       <div className="flex-1 p-4">
         <div className="max-w-4xl mx-auto pt-20">
-        <div className="bg-white rounded-2xl shadow-[inset_0_-8px_8px_rgba(248,246,244,0.8)] p-8">
-          <h2 className="text-2xl font-semibold mb-8">Access Code Setting</h2>
+          <div className="bg-white rounded-2xl shadow-[inset_0_-8px_8px_rgba(248,246,244,0.8)] p-8">
+            <h2 className="text-2xl font-semibold mb-8">Access Code Setting</h2>
 
-          <form onSubmit={handleUpdateCode} className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="current-code" className="text-foreground">
-                  Enter Current Access Code
-                </Label>
-                <Input
-                  id="current-code"
-                  type="text"
-                  placeholder="Nom nom"
-                  value={currentCode}
-                  onChange={(e) => setCurrentCode(e.target.value)}
-                  required
-                  className="mt-2"
-                />
+            <form onSubmit={handleUpdateCode} className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="current-code" className="text-foreground">
+                    Enter Current Access Code
+                  </Label>
+                  <Input
+                    id="current-code"
+                    type="text"
+                    placeholder="Nom nom"
+                    value={currentCode}
+                    onChange={(e) => setCurrentCode(e.target.value)}
+                    required
+                    className="mt-2"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="new-code" className="text-foreground">
+                    Enter New Access Code
+                  </Label>
+                  <Input
+                    id="new-code"
+                    type="text"
+                    placeholder="Nom nom"
+                    value={newCode}
+                    onChange={(e) => setNewCode(e.target.value)}
+                    required
+                    className="mt-2"
+                  />
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="new-code" className="text-foreground">
-                  Enter New Access Code
-                </Label>
-                <Input
-                  id="new-code"
-                  type="text"
-                  placeholder="Nom nom"
-                  value={newCode}
-                  onChange={(e) => setNewCode(e.target.value)}
-                  required
-                  className="mt-2"
-                />
+              <div className="flex justify-end">
+                <Button
+                  type="submit"
+                  variant="cafe"
+                  disabled={loading}
+                  className="px-8"
+                >
+                  {loading ? "Saving..." : "Save New Access Code"}
+                </Button>
               </div>
-            </div>
-
-            <div className="flex justify-end">
-              <Button
-                type="submit"
-                variant="cafe"
-                disabled={loading}
-                className="px-8"
-              >
-                {loading ? "Saving..." : "Save New Access Code"}
-              </Button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
 
-      <p className="text-center mt-8 text-sm text-muted-foreground">
-        Made with ☕ from Banung
-      </p>
+      <Footer />
     </div>
   );
 };
