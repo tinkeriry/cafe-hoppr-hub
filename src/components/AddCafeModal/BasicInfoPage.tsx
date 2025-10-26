@@ -16,17 +16,15 @@ const BasicInfoPage: React.FC<BasicInfoPageProps> = ({ onNext }) => {
   const { formData, updateFormData } = useCafeForm();
 
   const handleRatingChange = (rating: number) => {
-    updateFormData({ rating });
+    updateFormData({ star_rating: rating });
   };
 
   const isFormValid = () => {
     return formData.name.trim() !== '' && 
-           formData.image_url.trim() !== '' && 
-           formData.location_link.trim() !== '' &&
-           formData.opening_hour.trim() !== '' &&
-           formData.closing_hour.trim() !== '' &&
-           formData.comment.trim() !== '' &&
-           formData.rating > 0;
+           formData.cafe_photo.trim() !== '' && 
+           formData.cafe_location_link.trim() !== '' &&
+           formData.review.trim() !== '' &&
+           formData.star_rating > 0;
   };
 
   const renderStars = () => {
@@ -39,7 +37,7 @@ const BasicInfoPage: React.FC<BasicInfoPageProps> = ({ onNext }) => {
           onClick={() => handleRatingChange(i)}
           className="transition-transform duration-200 hover:scale-110"
         >
-          {i <= formData.rating ? (
+          {i <= formData.star_rating ? (
             <FilledYellowStar className="w-6 h-6" />
           ) : (
             <EmptyStar className="w-6 h-6" />
@@ -78,8 +76,8 @@ const BasicInfoPage: React.FC<BasicInfoPageProps> = ({ onNext }) => {
         <Input
           id="image"
           placeholder="Enter image link"
-          value={formData.image_url}
-          onChange={(e) => updateFormData({ image_url: e.target.value })}
+          value={formData.cafe_photo}
+          onChange={(e) => updateFormData({ cafe_photo: e.target.value })}
           required
         />
       </div>
@@ -90,43 +88,12 @@ const BasicInfoPage: React.FC<BasicInfoPageProps> = ({ onNext }) => {
         <Input
           id="location"
           placeholder="Enter cafe Google Maps or Apple Map link"
-          value={formData.location_link}
-          onChange={(e) => updateFormData({ location_link: e.target.value })}
+          value={formData.cafe_location_link}
+          onChange={(e) => updateFormData({ cafe_location_link: e.target.value })}
           required
         />
       </div>
 
-      {/* Operational Hours */}
-      <div>
-        <Label>Operational Hours*</Label>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 relative">
-            <Input
-              placeholder="Enter opening hour"
-              value={formData.opening_hour}
-              onChange={(e) => updateFormData({ opening_hour: e.target.value })}
-              required
-              className="pr-10"
-            />
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <Clock className="w-4 h-4 text-[#746650]" />
-            </div>
-          </div>
-          <span className="text-[#746650] font-medium">-</span>
-          <div className="flex-1 relative">
-            <Input
-              placeholder="Enter closing hour"
-              value={formData.closing_hour}
-              onChange={(e) => updateFormData({ closing_hour: e.target.value })}
-              required
-              className="pr-10"
-            />
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <Clock className="w-4 h-4 text-[#746650]" />
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Rating */}
       <div>
@@ -134,22 +101,22 @@ const BasicInfoPage: React.FC<BasicInfoPageProps> = ({ onNext }) => {
         <div className="flex items-center gap-1 mt-2">
           {renderStars()}
         </div>
-        {formData.rating > 0 && (
+        {formData.star_rating > 0 && (
           <p className="text-sm text-[#746650] mt-1">
-            {formData.rating}/10 stars
+            {formData.star_rating}/10 stars
           </p>
         )}
       </div>
 
       {/* Comment/Review */}
       <div>
-        <Label htmlFor="comment">Comment/Review*</Label>
+        <Label htmlFor="review">Comment/Review*</Label>
         <Textarea
-          id="comment"
-          placeholder="How was the cafe?"
-          value={formData.comment}
-          onChange={(e) => updateFormData({ comment: e.target.value })}
-          rows={3}
+          id="review"
+          placeholder="Share your experience about this cafe..."
+          value={formData.review}
+          onChange={(e) => updateFormData({ review: e.target.value })}
+          rows={4}
           required
         />
       </div>

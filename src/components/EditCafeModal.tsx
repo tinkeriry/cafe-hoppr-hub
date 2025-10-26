@@ -5,29 +5,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
+import { sql } from "@/integrations/neon/client";
+import { Cafe } from "@/integrations/neon/types";
 import { toast } from "sonner";
-
-interface Cafe {
-  id: string;
-  name: string;
-  image_url: string;
-  location_link: string;
-  opening_hour: string;
-  closing_hour: string;
-  rating: number;
-  comment: string;
-  price: number;
-  food_taste: number;
-  seating: number;
-  signal_strength: number;
-  noise: number;
-  electricity: number;
-  lighting: number;
-  mushola: number;
-  smoking_room: number;
-  parking: number;
-}
 
 interface EditCafeModalProps {
   open: boolean;
@@ -53,18 +33,33 @@ const EditCafeModal = ({ open, onOpenChange, cafe, onSuccess }: EditCafeModalPro
     setLoading(true);
 
     try {
-      const { error } = await supabase
-        .from("cafes")
-        .update(formData)
-        .eq("id", formData.id);
-
-      if (error) throw error;
+      await sql`
+        UPDATE cafes SET
+          name = ${formData.name},
+          cafe_photo = ${formData.cafe_photo},
+          cafe_location_link = ${formData.cafe_location_link},
+          review = ${formData.review},
+          star_rating = ${formData.star_rating},
+          price = ${formData.price},
+          wifi = ${formData.wifi},
+          seat_comfort = ${formData.seat_comfort},
+          electricity_socket = ${formData.electricity_socket},
+          food_beverage = ${formData.food_beverage},
+          praying_room = ${formData.praying_room},
+          hospitality = ${formData.hospitality},
+          toilet = ${formData.toilet},
+          noise = ${formData.noise},
+          parking = ${formData.parking},
+          updated_at = ${new Date().toISOString()}
+        WHERE cafe_id = ${formData.cafe_id}
+      `;
 
       toast.success("Cafe updated successfully!");
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      console.error('Error updating cafe:', error);
+      toast.error("Error updating cafe. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -73,8 +68,8 @@ const EditCafeModal = ({ open, onOpenChange, cafe, onSuccess }: EditCafeModalPro
   if (!formData) return null;
 
   const selectOptions = {
-    rating: ["Best", "Good", "Average", "Poor"],
-    availability: ["Yes", "No", "Limited"],
+    rating: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+    availability: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
   };
 
   return (
@@ -108,8 +103,8 @@ const EditCafeModal = ({ open, onOpenChange, cafe, onSuccess }: EditCafeModalPro
             <Input
               id="image"
               placeholder="Enter image link"
-              value={formData.image_url}
-              onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+              value={formData.cafe_photo}
+              onChange={(e) => setFormData({ ...formData, cafe_photo: e.target.value })}
               required
             />
           </div>
@@ -119,19 +114,19 @@ const EditCafeModal = ({ open, onOpenChange, cafe, onSuccess }: EditCafeModalPro
             <Input
               id="location"
               placeholder="Enter cafe Google Maps or Apple Map link"
-              value={formData.location_link}
-              onChange={(e) => setFormData({ ...formData, location_link: e.target.value })}
+              value={formData.cafe_location_link}
+              onChange={(e) => setFormData({ ...formData, cafe_location_link: e.target.value })}
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="comment">Comment/Review*</Label>
+            <Label htmlFor="review">Comment/Review*</Label>
             <Textarea
-              id="comment"
+              id="review"
               placeholder="Enter whatever lol"
-              value={formData.comment || ""}
-              onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
+              value={formData.review || ""}
+              onChange={(e) => setFormData({ ...formData, review: e.target.value })}
               rows={3}
             />
           </div>
@@ -139,7 +134,7 @@ const EditCafeModal = ({ open, onOpenChange, cafe, onSuccess }: EditCafeModalPro
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="price">💲 Price</Label>
-              <Select value={formData.price || ""} onValueChange={(value) => setFormData({ ...formData, price: value })}>
+              <Select value={formData.price?.toString() || ""} onValueChange={(value) => setFormData({ ...formData, price: parseInt(value) })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
@@ -153,7 +148,7 @@ const EditCafeModal = ({ open, onOpenChange, cafe, onSuccess }: EditCafeModalPro
 
             <div>
               <Label htmlFor="food_taste">🍔 Food Taste</Label>
-              <Select value={formData.food_taste || ""} onValueChange={(value) => setFormData({ ...formData, food_taste: value })}>
+              <Select value={formData.food_beverage?.toString() || ""} onValueChange={(value) => setFormData({ ...formData, food_beverage: parseInt(value) })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
@@ -170,14 +165,14 @@ const EditCafeModal = ({ open, onOpenChange, cafe, onSuccess }: EditCafeModalPro
               <Input
                 id="seating"
                 placeholder="Banyak dan enakeun ga?"
-                value={formData.seating || ""}
-                onChange={(e) => setFormData({ ...formData, seating: e.target.value })}
+                value={formData.seat_comfort?.toString() || ""}
+                onChange={(e) => setFormData({ ...formData, seat_comfort: parseInt(e.target.value) || 0 })}
               />
             </div>
 
             <div>
               <Label htmlFor="signal">📶 Signal Strength</Label>
-              <Select value={formData.signal_strength || ""} onValueChange={(value) => setFormData({ ...formData, signal_strength: value })}>
+              <Select value={formData.wifi?.toString() || ""} onValueChange={(value) => setFormData({ ...formData, wifi: parseInt(value) })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
@@ -191,7 +186,7 @@ const EditCafeModal = ({ open, onOpenChange, cafe, onSuccess }: EditCafeModalPro
 
             <div>
               <Label htmlFor="noise">🔊 Noise</Label>
-              <Select value={formData.noise || ""} onValueChange={(value) => setFormData({ ...formData, noise: value })}>
+              <Select value={formData.noise?.toString() || ""} onValueChange={(value) => setFormData({ ...formData, noise: parseInt(value) })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
@@ -205,7 +200,7 @@ const EditCafeModal = ({ open, onOpenChange, cafe, onSuccess }: EditCafeModalPro
 
             <div>
               <Label htmlFor="electricity">⚡ Electricity</Label>
-              <Select value={formData.electricity || ""} onValueChange={(value) => setFormData({ ...formData, electricity: value })}>
+              <Select value={formData.electricity_socket?.toString() || ""} onValueChange={(value) => setFormData({ ...formData, electricity_socket: parseInt(value) })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
@@ -218,8 +213,8 @@ const EditCafeModal = ({ open, onOpenChange, cafe, onSuccess }: EditCafeModalPro
             </div>
 
             <div>
-              <Label htmlFor="lighting">💡 Lighting</Label>
-              <Select value={formData.lighting || ""} onValueChange={(value) => setFormData({ ...formData, lighting: value })}>
+              <Label htmlFor="toilet">🚽 Toilet</Label>
+              <Select value={formData.toilet?.toString() || ""} onValueChange={(value) => setFormData({ ...formData, toilet: parseInt(value) })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
@@ -233,7 +228,7 @@ const EditCafeModal = ({ open, onOpenChange, cafe, onSuccess }: EditCafeModalPro
 
             <div>
               <Label htmlFor="mushola">🕌 Mushola</Label>
-              <Select value={formData.mushola || ""} onValueChange={(value) => setFormData({ ...formData, mushola: value })}>
+              <Select value={formData.praying_room?.toString() || ""} onValueChange={(value) => setFormData({ ...formData, praying_room: parseInt(value) })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
@@ -247,7 +242,7 @@ const EditCafeModal = ({ open, onOpenChange, cafe, onSuccess }: EditCafeModalPro
 
             <div>
               <Label htmlFor="smoking">🚬 Smoking Room</Label>
-              <Select value={formData.smoking_room || ""} onValueChange={(value) => setFormData({ ...formData, smoking_room: value })}>
+              <Select value={formData.hospitality?.toString() || ""} onValueChange={(value) => setFormData({ ...formData, hospitality: parseInt(value) })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
@@ -261,7 +256,7 @@ const EditCafeModal = ({ open, onOpenChange, cafe, onSuccess }: EditCafeModalPro
 
             <div>
               <Label htmlFor="parking">🅿️ Parking</Label>
-              <Select value={formData.parking || ""} onValueChange={(value) => setFormData({ ...formData, parking: value })}>
+              <Select value={formData.parking?.toString() || ""} onValueChange={(value) => setFormData({ ...formData, parking: parseInt(value) })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>

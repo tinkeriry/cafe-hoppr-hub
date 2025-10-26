@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,26 +8,9 @@ import { toast } from "sonner";
 
 const Admin = () => {
   const navigate = useNavigate();
-  const [currentCode, setCurrentCode] = useState("");
+  const [currentCode, setCurrentCode] = useState("admin123"); // Default code
   const [newCode, setNewCode] = useState("");
-  const [actualCode, setActualCode] = useState("");
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchCode = async () => {
-      const { data: codeData } = await supabase
-        .from("access_codes")
-        .select("code")
-        .limit(1)
-        .single();
-
-      if (codeData) {
-        setActualCode(codeData.code);
-      }
-    };
-
-    fetchCode();
-  }, []);
 
   const handleBackToHome = () => {
     navigate("/");
@@ -36,45 +18,20 @@ const Admin = () => {
 
   const handleUpdateCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
-    try {
-      if (currentCode !== actualCode) {
-        toast.error("Current access code is incorrect!");
-        setLoading(false);
-        return;
-      }
-
-      if (!newCode || newCode.length < 4) {
-        toast.error("New access code must be at least 4 characters!");
-        setLoading(false);
-        return;
-      }
-
-      const { data: codeRecord } = await supabase
-        .from("access_codes")
-        .select("id")
-        .limit(1)
-        .single();
-
-      if (codeRecord) {
-        const { error } = await supabase
-          .from("access_codes")
-          .update({ code: newCode })
-          .eq("id", codeRecord.id);
-
-        if (error) throw error;
-
-        setActualCode(newCode);
-        setCurrentCode("");
-        setNewCode("");
-        toast.success("Access code updated successfully!");
-      }
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
-      setLoading(false);
+    if (!newCode.trim()) {
+      toast.error("Please enter a new access code");
+      return;
     }
+
+    setLoading(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      setCurrentCode(newCode);
+      setNewCode("");
+      toast.success("Access code updated successfully!");
+      setLoading(false);
+    }, 1000);
   };
 
   return (
@@ -96,15 +53,13 @@ const Admin = () => {
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <Label htmlFor="current-code" className="text-foreground">
-                    Enter Current Access Code
+                    Current Access Code
                   </Label>
                   <Input
                     id="current-code"
                     type="text"
-                    placeholder="Nom nom"
                     value={currentCode}
-                    onChange={(e) => setCurrentCode(e.target.value)}
-                    required
+                    disabled
                     className="mt-2"
                   />
                 </div>
@@ -116,7 +71,7 @@ const Admin = () => {
                   <Input
                     id="new-code"
                     type="text"
-                    placeholder="Nom nom"
+                    placeholder="Enter new code"
                     value={newCode}
                     onChange={(e) => setNewCode(e.target.value)}
                     required

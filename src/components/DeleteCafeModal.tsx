@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { sql } from "@/integrations/neon/client";
 import { toast } from "sonner";
 import { useState } from "react";
 
@@ -20,15 +20,14 @@ const DeleteCafeModal = ({ open, onOpenChange, cafeId, cafeName, onSuccess }: De
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("cafes").delete().eq("id", cafeId);
-
-      if (error) throw error;
+      await sql`DELETE FROM cafes WHERE cafe_id = ${cafeId}`;
 
       toast.success("Cafe deleted successfully!");
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      console.error('Error deleting cafe:', error);
+      toast.error("Error deleting cafe. Please try again.");
     } finally {
       setLoading(false);
     }

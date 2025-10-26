@@ -6,24 +6,26 @@ import HalfFilledYellowStar from "@/components/icons/HalfFilledYellowStar";
 
 interface CafeCardProps {
   cafe: {
-    id: string;
+    cafe_id: string;
     name: string;
-    image_url: string;
-    location_link: string;
-    opening_hour: string;
-    closing_hour: string;
-    rating: number;
-    comment: string;
-    price?: number;
-    food_taste?: number;
-    seating?: number;
-    signal_strength?: number;
-    noise?: number;
-    electricity?: number;
-    lighting?: number;
-    mushola?: number;
-    smoking_room?: number;
-    parking?: number;
+    cafe_photo: string;
+    cafe_location_link: string;
+    review: string;
+    star_rating: number;
+    price: number;
+    wifi: number;
+    seat_comfort: number;
+    electricity_socket: number;
+    food_beverage: number;
+    praying_room: number;
+    hospitality: number;
+    toilet: number;
+    noise: number;
+    parking: number;
+    created_by: string;
+    status: string;
+    created_at: string;
+    updated_at: string;
   };
   onEdit: () => void;
   onDelete: () => void;
@@ -63,14 +65,14 @@ const CafeCard = ({ cafe, onEdit, onDelete }: CafeCardProps) => {
 
   const badges = [
     { icon: "💲", value: cafe.price },
-    { icon: "🍔", value: cafe.food_taste },
-    { icon: "🪑", value: cafe.seating },
-    { icon: "📶", value: cafe.signal_strength },
+    { icon: "🍔", value: cafe.food_beverage },
+    { icon: "🪑", value: cafe.seat_comfort },
+    { icon: "📶", value: cafe.wifi },
     { icon: "🔊", value: cafe.noise },
-    { icon: "⚡", value: cafe.electricity },
-    { icon: "💡", value: cafe.lighting },
-    { icon: "🕌", value: cafe.mushola },
-    { icon: "🚬", value: cafe.smoking_room },
+    { icon: "⚡", value: cafe.electricity_socket },
+    { icon: "🕌", value: cafe.praying_room },
+    { icon: "😊", value: cafe.hospitality },
+    { icon: "🚽", value: cafe.toilet },
     { icon: "🅿️", value: cafe.parking },
   ].filter((badge) => badge.value && badge.value > 0);
 
@@ -102,7 +104,7 @@ const CafeCard = ({ cafe, onEdit, onDelete }: CafeCardProps) => {
       onTouchEnd={handleTouchEnd}
     >
       <img
-        src={cafe.image_url}
+        src={cafe.cafe_photo}
         alt={cafe.name}
         className="w-full h-48 object-cover"
       />
@@ -148,14 +150,14 @@ const CafeCard = ({ cafe, onEdit, onDelete }: CafeCardProps) => {
         {/* Rating display with custom stars */}
         <div className="flex items-center gap-2 mb-3">
           <div className="flex items-center gap-1">
-            {renderStars(cafe.rating)}
+            {renderStars(cafe.star_rating)}
           </div>
-          <span className="text-sm font-medium">{cafe.rating}</span>
+          <span className="text-sm font-medium">{cafe.star_rating}</span>
           <span className="text-xs text-muted-foreground">1 reviews</span>
         </div>
         
         <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-          {cafe.comment}
+          {cafe.review}
         </p>
 
         <div className="flex flex-wrap gap-2 mb-4">
@@ -168,7 +170,7 @@ const CafeCard = ({ cafe, onEdit, onDelete }: CafeCardProps) => {
 
         <Button
           variant="cafe"
-          onClick={() => window.open(cafe.location_link, "_blank")}
+          onClick={() => window.open(cafe.cafe_location_link, "_blank")}
           className="w-full"
         >
           See Details

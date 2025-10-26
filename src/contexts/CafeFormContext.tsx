@@ -3,23 +3,21 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 interface CafeFormData {
   // Page 1 - Basic Info
   name: string;
-  image_url: string;
-  location_link: string;
-  opening_hour: string;
-  closing_hour: string;
-  rating: number;
-  comment: string;
+  cafe_photo: string;
+  cafe_location_link: string;
+  review: string;
+  star_rating: number;
   
   // Page 2 - Details
   price: number;
-  food_taste: number;
-  seating: number;
-  signal_strength: number;
+  wifi: number;
+  seat_comfort: number;
+  electricity_socket: number;
+  food_beverage: number;
+  praying_room: number;
+  hospitality: number;
+  toilet: number;
   noise: number;
-  electricity: number;
-  lighting: number;
-  mushola: number;
-  smoking_room: number;
   parking: number;
 }
 
@@ -33,21 +31,19 @@ interface CafeFormContextType {
 
 const initialFormData: CafeFormData = {
   name: "",
-  image_url: "",
-  location_link: "",
-  opening_hour: "",
-  closing_hour: "",
-  rating: 0,
-  comment: "",
+  cafe_photo: "",
+  cafe_location_link: "",
+  review: "",
+  star_rating: 0,
   price: 0,
-  food_taste: 0,
-  seating: 0,
-  signal_strength: 0,
+  wifi: 0,
+  seat_comfort: 0,
+  electricity_socket: 0,
+  food_beverage: 0,
+  praying_room: 0,
+  hospitality: 0,
+  toilet: 0,
   noise: 0,
-  electricity: 0,
-  lighting: 0,
-  mushola: 0,
-  smoking_room: 0,
   parking: 0,
 };
 

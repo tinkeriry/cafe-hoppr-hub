@@ -29,11 +29,11 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ onPrevious, onSubmit, loading
   };
 
   const isFormValid = () => {
-    // Required fields: price, seating, signal_strength, electricity
+    // Required fields: price, seat_comfort, wifi, electricity_socket
     return formData.price > 0 && 
-           formData.seating > 0 && 
-           formData.signal_strength > 0 && 
-           formData.electricity > 0;
+           formData.seat_comfort > 0 && 
+           formData.wifi > 0 && 
+           formData.electricity_socket > 0;
   };
 
   const renderStars = (field: keyof typeof formData, currentRating: number) => {
@@ -76,18 +76,18 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ onPrevious, onSubmit, loading
         {/* Left Column */}
         <div className="space-y-6">
           {renderRatingField('price', 'Price', <Price className="w-4 h-4 text-[#746650]" />, true)}
-          {renderRatingField('seating', 'Seat Comfort', <Seat className="w-4 h-4 text-[#746650]" />, true)}
-          {renderRatingField('food_taste', 'Food and Beverage', <Food className="w-4 h-4 text-[#746650]" />)}
-          {renderRatingField('smoking_room', 'Hospitality', <Smile className="w-4 h-4 text-[#746650]" />)}
+          {renderRatingField('seat_comfort', 'Seat Comfort', <Seat className="w-4 h-4 text-[#746650]" />, true)}
+          {renderRatingField('food_beverage', 'Food and Beverage', <Food className="w-4 h-4 text-[#746650]" />)}
+          {renderRatingField('hospitality', 'Hospitality', <Smile className="w-4 h-4 text-[#746650]" />)}
           {renderRatingField('parking', 'Parking', <Park className="w-4 h-4 text-[#746650]" />)}
         </div>
 
         {/* Right Column */}
         <div className="space-y-6">
-          {renderRatingField('signal_strength', 'Wifi', <Wifi className="w-4 h-4 text-[#746650]" />, true)}
-          {renderRatingField('electricity', 'Electric Socket', <Electricity className="w-4 h-4 text-[#746650]" />, true)}
-          {renderRatingField('mushola', 'Praying Room', <Pray className="w-4 h-4 text-[#746650]" />)}
-          {renderRatingField('lighting', 'Lighting', <Lighting className="w-4 h-4 text-[#746650]" />)}
+          {renderRatingField('wifi', 'Wifi', <Wifi className="w-4 h-4 text-[#746650]" />, true)}
+          {renderRatingField('electricity_socket', 'Electric Socket', <Electricity className="w-4 h-4 text-[#746650]" />, true)}
+          {renderRatingField('praying_room', 'Praying Room', <Pray className="w-4 h-4 text-[#746650]" />)}
+          {renderRatingField('toilet', 'Toilet', <Lighting className="w-4 h-4 text-[#746650]" />)}
           {renderRatingField('noise', 'Noise', <Speaker className="w-4 h-4 text-[#746650]" />)}
         </div>
       </div>
