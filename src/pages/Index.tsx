@@ -103,11 +103,11 @@ const Index = () => {
         {/* Header */}
         <div className="text-center mb-12 relative mt-16">
           {/* Floating Emojis */}
-          <div className="absolute inset-2 pointer-events-none">
-            <span className="absolute -top-2 -left-1 text-6xl animate-bounce" style={{ animationDelay: '0s', animationDuration: '3s' }}>☘️</span>
-            <span className="absolute -top-1 -right-1 text-5xl animate-bounce" style={{ animationDelay: '1s', animationDuration: '3.5s' }}>🧑‍💻</span>
-            <span className="absolute -bottom-1 -left-2 text-5xl animate-bounce" style={{ animationDelay: '0.5s', animationDuration: '2.5s' }}>☕</span>
-            <span className="absolute -bottom-2 -right-2 text-6xl animate-bounce" style={{ animationDelay: '1.5s', animationDuration: '2.8s' }}>🥐</span>
+          <div className="absolute inset-4 pointer-events-none">
+            <span className="absolute -top-5 left-36 text-6xl animate-bounce" style={{ animationDelay: '0s', animationDuration: '3s' }}>☘️</span>
+            <span className="absolute -top-4 right-36 text-6xl animate-bounce" style={{ animationDelay: '1s', animationDuration: '3.5s' }}>🧑‍💻</span>
+            <span className="absolute -bottom-1 left-16 text-6xl animate-bounce" style={{ animationDelay: '0.5s', animationDuration: '2.5s' }}>☕</span>
+            <span className="absolute -bottom-2 right-16 text-6xl animate-bounce" style={{ animationDelay: '1.5s', animationDuration: '2.8s' }}>🥐</span>
           </div>
           
           <h1 className="font-pixel text-5xl md:text-6xl mb-4 text-foreground relative z-10">
