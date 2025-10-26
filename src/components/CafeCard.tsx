@@ -171,7 +171,7 @@ const CafeCard = ({ cafe, onEdit, onDelete }: CafeCardProps) => {
           <span className="text-xs text-muted-foreground">1 reviews</span>
         </div>
         
-        <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+        <p className="text-sm text-muted-foreground mb-4 line-clamp-3 min-h-[4.5rem]">
           {cafe.review}
         </p>
 
