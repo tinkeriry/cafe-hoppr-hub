@@ -103,17 +103,17 @@ const Index = () => {
         {/* Header */}
         <div className="text-center mb-12 relative mt-16">
           {/* Floating Emojis */}
-          <div className="absolute inset-0 pointer-events-none">
-            <span className="absolute -top-2 -left-2 text-6xl animate-bounce" style={{ animationDelay: '0s', animationDuration: '3s' }}>☘️</span>
-            <span className="absolute -top-1 -right-3 text-5xl animate-bounce" style={{ animationDelay: '0.5s', animationDuration: '2.5s' }}>☕</span>
-            <span className="absolute -bottom-1 -left-3 text-5xl animate-bounce" style={{ animationDelay: '1s', animationDuration: '3.5s' }}>🧑‍💻</span>
+          <div className="absolute inset-2 pointer-events-none">
+            <span className="absolute -top-2 -left-1 text-6xl animate-bounce" style={{ animationDelay: '0s', animationDuration: '3s' }}>☘️</span>
+            <span className="absolute -top-1 -right-1 text-5xl animate-bounce" style={{ animationDelay: '1s', animationDuration: '3.5s' }}>🧑‍💻</span>
+            <span className="absolute -bottom-1 -left-2 text-5xl animate-bounce" style={{ animationDelay: '0.5s', animationDuration: '2.5s' }}>☕</span>
             <span className="absolute -bottom-2 -right-2 text-6xl animate-bounce" style={{ animationDelay: '1.5s', animationDuration: '2.8s' }}>🥐</span>
           </div>
           
           <h1 className="font-pixel text-5xl md:text-6xl mb-4 text-foreground relative z-10">
             Cafe Hoppr
           </h1>
-          <p className="text-muted-foreground mb-8 text-lg max-w-2xl mx-auto">
+          <p className="text-muted-foreground mb-8 text-lg max-w-lg mx-auto">
             See our catalogue to find your WFC spot or simply "nyari angin" around Bandung
           </p>
 
