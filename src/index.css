@@ -9,8 +9,8 @@ All colors MUST be HSL.
 @layer base {
   :root {
     --background: 34 20% 98%;
-    --background-gradient-start: 34 20% 98%;
-    --background-gradient-end: 0 0% 100%;
+    --background-gradient-start: 30 15% 85%;
+    --background-gradient-end: 25 20% 75%;
     --foreground: 30 20% 35%;
 
     --card: 0 0% 100%;
@@ -60,8 +60,8 @@ All colors MUST be HSL.
 
   .dark {
     --background: 30 15% 15%;
-    --background-gradient-start: 30 15% 15%;
-    --background-gradient-end: 30 10% 10%;
+    --background-gradient-start: 25 20% 20%;
+    --background-gradient-end: 20 25% 12%;
     --foreground: 34 20% 95%;
 
     --card: 30 15% 20%;
