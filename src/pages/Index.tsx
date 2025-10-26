@@ -101,7 +101,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 py-8">
 
         {/* Header */}
-        <div className="text-center mb-12 relative">
+        <div className="text-center mb-12 relative mt-16">
           {/* Floating Emojis */}
           <div className="absolute inset-0 pointer-events-none">
             <span className="absolute -top-4 -left-4 text-4xl animate-bounce" style={{ animationDelay: '0s', animationDuration: '3s' }}>☘️</span>
