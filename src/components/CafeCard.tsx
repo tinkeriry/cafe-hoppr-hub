@@ -34,6 +34,11 @@ interface CafeCardProps {
 const CafeCard = ({ cafe, onEdit, onDelete }: CafeCardProps) => {
   const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [showMenu, setShowMenu] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
 
   const handleMouseDown = () => {
     const timer = setTimeout(() => {
@@ -103,11 +108,21 @@ const CafeCard = ({ cafe, onEdit, onDelete }: CafeCardProps) => {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <img
-        src={cafe.cafe_photo}
-        alt={cafe.name}
-        className="w-full h-48 object-cover"
-      />
+      {imageError || !cafe.cafe_photo ? (
+        <div className="w-full h-48 bg-gradient-to-br from-[#e5d8c2] to-[#d4c4a8] flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-6xl mb-2">☕</div>
+            <p className="text-[#746650] font-medium text-sm">No Image</p>
+          </div>
+        </div>
+      ) : (
+        <img
+          src={cafe.cafe_photo}
+          alt={cafe.name}
+          className="w-full h-48 object-cover"
+          onError={handleImageError}
+        />
+      )}
       
       {showMenu && (
         <div className="absolute top-2 right-2 bg-white rounded-lg shadow-lg p-2 space-y-2 z-10">

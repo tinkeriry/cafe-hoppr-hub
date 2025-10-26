@@ -38,7 +38,7 @@ const AddCafeModalContent = ({ open, onOpenChange, onSuccess }: AddCafeModalProp
         noise: formData.noise,
         parking: formData.parking,
         created_by: 'user', // You can replace this with actual user ID
-        status: 'active',
+        status: 'approved',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };

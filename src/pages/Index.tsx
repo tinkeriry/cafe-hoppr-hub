@@ -46,7 +46,7 @@ const Index = () => {
     try {
       const cafes = await sql`
         SELECT * FROM cafes 
-        WHERE status = 'active' 
+        WHERE status = 'approved' 
         ORDER BY created_at DESC
       ` as Cafe[];
       setCafes(cafes);
