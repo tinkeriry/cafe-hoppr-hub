@@ -57,12 +57,12 @@ const SortModal = ({ isOpen, onClose, onSort, activeSort }: SortModalProps) => {
         {sortOptions.map((option, index) => (
           <div 
             key={index}
-            className="self-stretch flex-grow-0 flex-shrink-0 w-52 text-lg font-medium text-left text-[#604926] cursor-pointer hover:text-[#746650] hover:bg-gray-50 px-3 py-2 rounded-lg transition-all duration-200 ease-in-out flex items-center justify-between"
+            className="self-stretch flex-grow-0 flex-shrink-0 w-52 text-base font-medium text-left text-[#604926] cursor-pointer hover:text-[#746650] hover:bg-gray-50 px-3 py-2 rounded-lg transition-all duration-200 ease-in-out flex items-center justify-between"
             onClick={(e) => handleSort(option, e)}
           >
             <span>{option}</span>
             {activeSort === option && (
-              <span className="text-green-600 text-lg">✓</span>
+              <span className="text-green-600 text-base">✓</span>
             )}
           </div>
         ))}
