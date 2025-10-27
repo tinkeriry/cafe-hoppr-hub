@@ -59,10 +59,10 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ onPrevious, onSubmit, loading
 
   const renderRatingField = (field: keyof typeof formData, label: string, icon: React.ReactNode, isRequired: boolean = false) => (
     <div className="space-y-2">
-      <Label className="flex items-center gap-2 text-sm font-medium text-[#604926]">
+      <Label className="flex items-center gap-1 text-sm font-medium text-[#604926]">
         {icon}
         {label}
-        {isRequired && <span className="text-red-500">*</span>}
+        {isRequired && <span>*</span>}
       </Label>
       <div className="flex gap-1">
         {renderStars(field, formData[field] as number)}

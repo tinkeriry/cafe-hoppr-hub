@@ -107,6 +107,24 @@ const BasicInfoPage: React.FC<BasicInfoPageProps> = ({ onNext }) => {
     setSearchQuery(e.target.value);
   };
 
+  const isValidUrl = (url: string): boolean => {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const isValidImageUrl = (url: string): boolean => {
+    if (!isValidUrl(url)) return false;
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
+    const lowerUrl = url.toLowerCase();
+    return imageExtensions.some(ext => lowerUrl.includes(ext)) || 
+           lowerUrl.includes('unsplash.com') || 
+           lowerUrl.includes('images.unsplash.com');
+  };
+
   const handleRatingChange = (rating: number) => {
     updateFormData({ star_rating: rating });
   };
@@ -114,7 +132,9 @@ const BasicInfoPage: React.FC<BasicInfoPageProps> = ({ onNext }) => {
   const isFormValid = () => {
     return formData.name.trim() !== '' && 
            formData.cafe_photo.trim() !== '' && 
+           isValidImageUrl(formData.cafe_photo) &&
            formData.cafe_location_link.trim() !== '' &&
+           isValidUrl(formData.cafe_location_link) &&
            formData.review.trim() !== '' &&
            formData.star_rating > 0;
   };
@@ -144,7 +164,7 @@ const BasicInfoPage: React.FC<BasicInfoPageProps> = ({ onNext }) => {
     <div className="space-y-6">
       {/* Cafe Name */}
       <div>
-        <Label htmlFor="name">Cafe Name*</Label>
+        <Label htmlFor="name">Cafe Name *</Label>
         <div className="relative" ref={dropdownRef}>
           <Input
             id="name"
@@ -225,32 +245,44 @@ const BasicInfoPage: React.FC<BasicInfoPageProps> = ({ onNext }) => {
 
       {/* Cafe Image */}
       <div>
-        <Label htmlFor="image">Cafe Image*</Label>
+        <Label htmlFor="image">Cafe Image  *</Label>
         <Input
           id="image"
           placeholder="Enter image link"
           value={formData.cafe_photo}
           onChange={(e) => updateFormData({ cafe_photo: e.target.value })}
           required
+          className={formData.cafe_photo.trim() !== '' && !isValidImageUrl(formData.cafe_photo) ? 'border-red-500' : ''}
         />
+        {formData.cafe_photo.trim() !== '' && !isValidImageUrl(formData.cafe_photo) && (
+          <p className="text-red-500 text-sm mt-1">
+            Please enter a valid image URL (e.g., .jpg, .png, .gif, .webp, .svg or Unsplash link)
+          </p>
+        )}
       </div>
 
       {/* Cafe Location Link */}
       <div>
-        <Label htmlFor="location">Cafe Location Link*</Label>
+        <Label htmlFor="location">Cafe Location Link *</Label>
         <Input
           id="location"
           placeholder="Enter cafe Google Maps or Apple Map link"
           value={formData.cafe_location_link}
           onChange={(e) => updateFormData({ cafe_location_link: e.target.value })}
           required
+          className={formData.cafe_location_link.trim() !== '' && !isValidUrl(formData.cafe_location_link) ? 'border-red-500' : ''}
         />
+        {formData.cafe_location_link.trim() !== '' && !isValidUrl(formData.cafe_location_link) && (
+          <p className="text-red-500 text-sm mt-1">
+            Please enter a valid URL (e.g., https://maps.google.com/?q=Cafe+Name)
+          </p>
+        )}
       </div>
 
 
       {/* Rating */}
       <div>
-        <Label>Rating*</Label>
+        <Label>Rating *</Label>
         <div className="flex items-center gap-1 mt-2">
           {renderStars()}
         </div>
@@ -263,7 +295,7 @@ const BasicInfoPage: React.FC<BasicInfoPageProps> = ({ onNext }) => {
 
       {/* Comment/Review */}
       <div>
-        <Label htmlFor="review">Comment/Review*</Label>
+        <Label htmlFor="review">Comment/Review *</Label>
         <Textarea
           id="review"
           placeholder="Share your experience about this cafe..."
