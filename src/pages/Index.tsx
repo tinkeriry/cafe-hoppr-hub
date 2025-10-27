@@ -25,6 +25,7 @@ const Index = () => {
   const [activeSort, setActiveSort] = useState<string>("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchCafes();
@@ -43,6 +44,7 @@ const Index = () => {
   }, [searchQuery, cafes]);
 
   const fetchCafes = async () => {
+    setIsLoading(true);
     try {
       const cafes = await sql`
         SELECT * FROM cafes 
@@ -54,6 +56,8 @@ const Index = () => {
     } catch (error) {
       console.error('Error fetching cafes:', error);
       toast.error("Error loading cafes");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -174,7 +178,16 @@ const Index = () => {
         </div>
 
         {/* Cafe Cards */}
-        {filteredCafes.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-20">
+            <div className="flex justify-center items-center gap-4 mb-4 text-6xl">
+              <span className="animate-spin">☕</span>
+            </div>
+            <p className="text-xl text-muted-foreground mb-8">
+              Loading cafes...
+            </p>
+          </div>
+        ) : filteredCafes.length === 0 ? (
           <div className="text-center py-20">
             <div className="flex justify-center items-center gap-4 mb-4 text-6xl">
               <span>🏍️</span>
