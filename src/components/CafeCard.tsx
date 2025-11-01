@@ -49,9 +49,10 @@ interface CafeCardProps {
   };
   onEdit: () => void;
   onDelete: () => void;
+  onAddReview: () => void;
 }
 
-const CafeCard = ({ cafe, onEdit, onDelete }: CafeCardProps) => {
+const CafeCard = ({ cafe, onEdit, onDelete, onAddReview }: CafeCardProps) => {
   const navigate = useNavigate();
   const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [showMenu, setShowMenu] = useState(false);
@@ -164,7 +165,7 @@ const CafeCard = ({ cafe, onEdit, onDelete }: CafeCardProps) => {
 
   const handleAddReview = () => {
     setShowActionMenu(false);
-    navigate(`/cafe/${cafe.cafe_id}`);
+    onAddReview();
   };
 
   const handleEditCafe = () => {
