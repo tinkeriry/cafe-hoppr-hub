@@ -5,7 +5,19 @@ pre-commit:
       run: npm run format
       stage_fixed: true
     lint:
-      run: npm run lint
+      run: |
+        if ! npm run lint; then
+          echo ""
+          echo "❌ Linting errors detected!"
+          echo ""
+          echo "💡 To fix linting errors, try running:"
+          echo "   npm run lint"
+          echo ""
+          echo "   Or to automatically fix some issues:"
+          echo "   npm run lint:fix"
+          echo ""
+          exit 1
+        fi
 
 commit-msg:
   commands:
