@@ -20,48 +20,37 @@ const AddCafeModalContent = ({ open, onOpenChange, onSuccess }: AddCafeModalProp
     setLoading(true);
 
     try {
-      const cafeData = {
-        cafe_id: crypto.randomUUID(),
-        name: formData.name,
-        cafe_photo: formData.cafe_photo,
-        cafe_location_link: formData.cafe_location_link,
-        review: formData.review,
-        star_rating: formData.star_rating,
-        operational_days: formData.operational_days,
-        opening_hour: formData.opening_hour,
-        closing_hour: formData.closing_hour,
-        price: formData.price,
-        wifi: formData.wifi,
-        seat_comfort: formData.seat_comfort,
-        electricity_socket: formData.electricity_socket,
-        food_beverage: formData.food_beverage,
-        praying_room: formData.praying_room,
-        hospitality: formData.hospitality,
-        toilet: formData.toilet,
-        noise: formData.noise,
-        parking: formData.parking,
-        created_by: formData.contributor_name,
-        status: 'approved',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
+      const cafeId = crypto.randomUUID();
+      const now = new Date().toISOString();
 
+      // Insert cafe
       await sql`
         INSERT INTO cafes (
-          cafe_id, name, cafe_photo, cafe_location_link, review, star_rating,
+          cafe_id, name, cafe_photo, cafe_location_link,
           operational_days, opening_hour, closing_hour,
+          status, created_at, updated_at
+        ) VALUES (
+          ${cafeId}, ${formData.name}, ${formData.cafe_photo}, 
+          ${formData.cafe_location_link},
+          ${formData.operational_days}, ${formData.opening_hour}, ${formData.closing_hour},
+          'approved', ${now}, ${now}
+        )
+      `;
+
+      // Insert review
+      await sql`
+        INSERT INTO reviews (
+          cafe_id, review, star_rating,
           price, wifi, seat_comfort, electricity_socket, food_beverage,
           praying_room, hospitality, toilet, noise, parking,
-          created_by, status, created_at, updated_at
+          created_by, created_at, updated_at
         ) VALUES (
-          ${cafeData.cafe_id}, ${cafeData.name}, ${cafeData.cafe_photo}, 
-          ${cafeData.cafe_location_link}, ${cafeData.review}, ${cafeData.star_rating},
-          ${cafeData.operational_days}, ${cafeData.opening_hour}, ${cafeData.closing_hour},
-          ${cafeData.price}, ${cafeData.wifi}, ${cafeData.seat_comfort}, 
-          ${cafeData.electricity_socket}, ${cafeData.food_beverage},
-          ${cafeData.praying_room}, ${cafeData.hospitality}, ${cafeData.toilet}, 
-          ${cafeData.noise}, ${cafeData.parking},
-          ${cafeData.created_by}, ${cafeData.status}, ${cafeData.created_at}, ${cafeData.updated_at}
+          ${cafeId}, ${formData.review}, ${formData.star_rating},
+          ${formData.price}, ${formData.wifi}, ${formData.seat_comfort}, 
+          ${formData.electricity_socket}, ${formData.food_beverage},
+          ${formData.praying_room}, ${formData.hospitality}, ${formData.toilet}, 
+          ${formData.noise}, ${formData.parking},
+          ${formData.contributor_name}, ${now}, ${now}
         )
       `;
 

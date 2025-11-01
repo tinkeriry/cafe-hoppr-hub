@@ -1,13 +1,8 @@
-export interface Cafe {
+export interface Review {
+  review_id: string;
   cafe_id: string;
-  name: string;
-  cafe_photo: string;
-  cafe_location_link: string;
   review: string;
   star_rating: number;
-  operational_days?: string[];
-  opening_hour?: string; // HH:MM
-  closing_hour?: string; // HH:MM
   price: number;
   wifi: number;
   seat_comfort: number;
@@ -19,9 +14,23 @@ export interface Cafe {
   noise: number;
   parking: number;
   created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Cafe {
+  cafe_id: string;
+  name: string;
+  cafe_photo: string;
+  cafe_location_link: string;
+  operational_days?: string[];
+  opening_hour?: string; // HH:MM
+  closing_hour?: string; // HH:MM
   status: string;
   created_at: string;
   updated_at: string;
+  // Multiple reviews per cafe
+  reviews?: Review[];
 }
 
 export interface CafeFormData {

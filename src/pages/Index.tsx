@@ -39,7 +39,7 @@ const Index = () => {
     if (searchQuery) {
       const filtered = cafes.filter((cafe) =>
         cafe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        cafe.review?.toLowerCase().includes(searchQuery.toLowerCase())
+        cafe.reviews?.some(review => review.review.toLowerCase().includes(searchQuery.toLowerCase()))
       );
       setFilteredCafes(filtered);
     } else {
@@ -74,11 +74,69 @@ const Index = () => {
   const fetchCafes = async () => {
     setIsLoading(true);
     try {
-      const cafes = await sql`
-        SELECT * FROM cafes 
-        WHERE status = 'approved' 
-        ORDER BY created_at DESC
-      ` as Cafe[];
+      const cafesWithReviews = await sql`
+        SELECT 
+          c.cafe_id,
+          c.name,
+          c.cafe_photo,
+          c.cafe_location_link,
+          c.operational_days,
+          c.opening_hour,
+          c.closing_hour,
+          c.status,
+          c.created_at,
+          c.updated_at,
+          COALESCE(
+            jsonb_agg(
+              jsonb_build_object(
+                'review_id', r.review_id,
+                'cafe_id', r.cafe_id,
+                'review', r.review,
+                'star_rating', r.star_rating,
+                'price', r.price,
+                'wifi', r.wifi,
+                'seat_comfort', r.seat_comfort,
+                'electricity_socket', r.electricity_socket,
+                'food_beverage', r.food_beverage,
+                'praying_room', r.praying_room,
+                'hospitality', r.hospitality,
+                'toilet', r.toilet,
+                'noise', r.noise,
+                'parking', r.parking,
+                'created_by', r.created_by,
+                'created_at', r.created_at,
+                'updated_at', r.updated_at
+              ) ORDER BY r.created_at DESC
+            ) FILTER (WHERE r.review_id IS NOT NULL),
+            '[]'::jsonb
+          ) as reviews
+        FROM cafes c
+        LEFT JOIN reviews r ON r.cafe_id = c.cafe_id
+        WHERE c.status = 'approved' 
+        GROUP BY c.cafe_id, c.name, c.cafe_photo, c.cafe_location_link, 
+                 c.operational_days, c.opening_hour, c.closing_hour,
+                 c.status, c.created_at, c.updated_at
+        ORDER BY c.created_at DESC
+      ` as any[];
+      
+      // Map to Cafe interface - parse JSON reviews array
+      const cafes = cafesWithReviews.map(row => {
+        let reviews = [];
+        if (row.reviews) {
+          if (Array.isArray(row.reviews)) {
+            reviews = row.reviews;
+          } else if (typeof row.reviews === 'string') {
+            reviews = JSON.parse(row.reviews);
+          } else {
+            reviews = row.reviews;
+          }
+        }
+        return {
+          ...row,
+          reviews: reviews
+        };
+      }) as Cafe[];
+      
       setCafes(cafes);
       setFilteredCafes(cafes);
     } catch (error) {
@@ -108,10 +166,18 @@ const Index = () => {
     
     switch (sortType) {
       case "Sort by Highest Rating":
-        sortedCafes.sort((a, b) => b.star_rating - a.star_rating);
+        sortedCafes.sort((a, b) => {
+          const avgA = a.reviews?.length ? a.reviews.reduce((sum, r) => sum + r.star_rating, 0) / a.reviews.length : 0;
+          const avgB = b.reviews?.length ? b.reviews.reduce((sum, r) => sum + r.star_rating, 0) / b.reviews.length : 0;
+          return avgB - avgA;
+        });
         break;
       case "Sort by Lowest Rating":
-        sortedCafes.sort((a, b) => a.star_rating - b.star_rating);
+        sortedCafes.sort((a, b) => {
+          const avgA = a.reviews?.length ? a.reviews.reduce((sum, r) => sum + r.star_rating, 0) / a.reviews.length : 0;
+          const avgB = b.reviews?.length ? b.reviews.reduce((sum, r) => sum + r.star_rating, 0) / b.reviews.length : 0;
+          return avgA - avgB;
+        });
         break;
       case "Sort by A-Z":
         sortedCafes.sort((a, b) => a.name.localeCompare(b.name));

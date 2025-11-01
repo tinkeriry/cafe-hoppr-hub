@@ -20,19 +20,25 @@ interface CafeCardProps {
     name: string;
     cafe_photo: string;
     cafe_location_link: string;
-    review: string;
-    star_rating: number;
-    price: number;
-    wifi: number;
-    seat_comfort: number;
-    electricity_socket: number;
-    food_beverage: number;
-    praying_room: number;
-    hospitality: number;
-    toilet: number;
-    noise: number;
-    parking: number;
-    created_by: string;
+    reviews?: {
+      review_id: string;
+      cafe_id: string;
+      review: string;
+      star_rating: number;
+      price: number;
+      wifi: number;
+      seat_comfort: number;
+      electricity_socket: number;
+      food_beverage: number;
+      praying_room: number;
+      hospitality: number;
+      toilet: number;
+      noise: number;
+      parking: number;
+      created_by: string;
+      created_at: string;
+      updated_at: string;
+    }[];
     status: string;
     created_at: string;
     updated_at: string;
@@ -78,18 +84,34 @@ const CafeCard = ({ cafe, onEdit, onDelete }: CafeCardProps) => {
     }
   };
 
+  // Get the latest review or aggregate averages from all reviews
+  const latestReview = cafe.reviews?.[0]; // Reviews are ordered by created_at DESC
+  const reviewCount = cafe.reviews?.length || 0;
+  
+  // Calculate average ratings across all reviews for badges
+  const avgRating = (field: 'price' | 'food_beverage' | 'seat_comfort' | 'wifi' | 'noise' | 'electricity_socket' | 'praying_room' | 'hospitality' | 'toilet' | 'parking') => {
+    if (!cafe.reviews?.length) return 0;
+    const sum = cafe.reviews.reduce((acc, r) => acc + (r[field] || 0), 0);
+    return Math.round(sum / cafe.reviews.length);
+  };
+
   const badges = [
-    { icon: Price, value: cafe.price },
-    { icon: Food, value: cafe.food_beverage },
-    { icon: Seat, value: cafe.seat_comfort },
-    { icon: Wifi, value: cafe.wifi },
-    { icon: Speaker, value: cafe.noise },
-    { icon: Electricity, value: cafe.electricity_socket },
-    { icon: Pray, value: cafe.praying_room },
-    { icon: Smile, value: cafe.hospitality },
-    { icon: Lighting, value: cafe.toilet },
-    { icon: Park, value: cafe.parking },
+    { icon: Price, value: avgRating('price') },
+    { icon: Food, value: avgRating('food_beverage') },
+    { icon: Seat, value: avgRating('seat_comfort') },
+    { icon: Wifi, value: avgRating('wifi') },
+    { icon: Speaker, value: avgRating('noise') },
+    { icon: Electricity, value: avgRating('electricity_socket') },
+    { icon: Pray, value: avgRating('praying_room') },
+    { icon: Smile, value: avgRating('hospitality') },
+    { icon: Lighting, value: avgRating('toilet') },
+    { icon: Park, value: avgRating('parking') },
   ].filter((badge) => badge.value && badge.value > 0);
+
+  // Calculate average star rating
+  const avgStarRating = cafe.reviews?.length 
+    ? cafe.reviews.reduce((sum, r) => sum + r.star_rating, 0) / cafe.reviews.length 
+    : 0;
 
   const renderStars = (rating: number) => {
     const stars = [];
@@ -173,17 +195,23 @@ const CafeCard = ({ cafe, onEdit, onDelete }: CafeCardProps) => {
         <h3 className="text-xl font-semibold mb-2">{cafe.name}</h3>
         
         {/* Rating display with custom stars */}
-        <div className="flex items-center gap-2 mb-3">
-          <div className="flex items-center gap-1">
-            {renderStars(cafe.star_rating)}
-          </div>
-          <span className="text-sm font-medium">{cafe.star_rating}</span>
-          <span className="text-xs text-muted-foreground">1 reviews</span>
-        </div>
-        
-        <p className="text-sm text-muted-foreground mb-4 line-clamp-3 min-h-[4rem]">
-          {cafe.review}
-        </p>
+        {latestReview && (
+          <>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-1">
+                {renderStars(Math.round(avgStarRating * 10) / 10)}
+              </div>
+              <span className="text-sm font-medium">{Math.round(avgStarRating * 10) / 10}</span>
+              <span className="text-xs text-muted-foreground">
+                {reviewCount} {reviewCount === 1 ? 'review' : 'reviews'}
+              </span>
+            </div>
+            
+            <p className="text-sm text-muted-foreground mb-4 line-clamp-3 min-h-[4rem]">
+              {latestReview.review}
+            </p>
+          </>
+        )}
 
         <div className="flex flex-wrap gap-2 mb-4">
           {badges.map((badge, index) => (
