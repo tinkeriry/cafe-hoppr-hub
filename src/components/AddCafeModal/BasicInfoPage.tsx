@@ -124,7 +124,7 @@ const BasicInfoPage: React.FC<BasicInfoPageProps> = ({ onNext }) => {
     setIsContributorLoading(true);
     try {
       const contributorList = await sql`
-        SELECT DISTINCT created_by FROM cafes 
+        SELECT DISTINCT created_by FROM reviews 
         WHERE created_by IS NOT NULL AND created_by != ''
         ORDER BY created_by ASC
       ` as { created_by: string }[];
@@ -209,6 +209,15 @@ const BasicInfoPage: React.FC<BasicInfoPageProps> = ({ onNext }) => {
            lowerUrl.includes('images.unsplash.com');
   };
 
+  const isValidHours = (): boolean => {
+    if (!formData.opening_hour || !formData.closing_hour) return true; // Let required validation handle empty
+    const opening = formData.opening_hour.split(':').map(Number);
+    const closing = formData.closing_hour.split(':').map(Number);
+    const openingMinutes = opening[0] * 60 + opening[1];
+    const closingMinutes = closing[0] * 60 + closing[1];
+    return openingMinutes < closingMinutes;
+  };
+
   const handleRatingChange = (rating: number) => {
     // Stars 1-6 are locked (non-clickable). For 7-10, allow toggle.
     if (rating <= 6) return;
@@ -228,6 +237,7 @@ const BasicInfoPage: React.FC<BasicInfoPageProps> = ({ onNext }) => {
            formData.operational_days.length > 0 &&
            formData.opening_hour.trim() !== '' &&
            formData.closing_hour.trim() !== '' &&
+           isValidHours() &&
            formData.contributor_name.trim() !== '';
   };
 
@@ -435,7 +445,7 @@ const BasicInfoPage: React.FC<BasicInfoPageProps> = ({ onNext }) => {
               placeholder="Enter opening hour"
               value={formData.opening_hour}
               onChange={(e) => updateFormData({ opening_hour: e.target.value })}
-              className="pr-10 appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-clear-button]:hidden [&::-ms-clear]:hidden"
+              className={`pr-10 appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-clear-button]:hidden [&::-ms-clear]:hidden ${formData.opening_hour && formData.closing_hour && !isValidHours() ? 'border-red-500' : ''}`}
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#746650]">
               <Clock className="w-5 h-5" />
@@ -447,13 +457,18 @@ const BasicInfoPage: React.FC<BasicInfoPageProps> = ({ onNext }) => {
               placeholder="Enter closing hour"
               value={formData.closing_hour}
               onChange={(e) => updateFormData({ closing_hour: e.target.value })}
-              className="pr-10 appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-clear-button]:hidden [&::-ms-clear]:hidden"
+              className={`pr-10 appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-clear-button]:hidden [&::-ms-clear]:hidden ${formData.opening_hour && formData.closing_hour && !isValidHours() ? 'border-red-500' : ''}`}
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#746650]">
               <Clock className="w-5 h-5" />
             </div>
           </div>
         </div>
+        {formData.opening_hour && formData.closing_hour && !isValidHours() && (
+          <p className="text-red-500 text-sm mt-1">
+            Opening hour must be before closing hour
+          </p>
+        )}
       </div>
 
       {/* Comment/Review */}
