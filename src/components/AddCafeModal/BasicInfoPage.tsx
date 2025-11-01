@@ -192,7 +192,7 @@ const BasicInfoPage: React.FC<BasicInfoPageProps> = ({ onNext }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Cafe Name */}
       <div>
         <Label htmlFor="name">Cafe Name *</Label>
