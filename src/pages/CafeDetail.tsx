@@ -247,52 +247,52 @@ const CafeDetail = () => {
                     {/* Review Metrics */}
                     <div className="flex flex-wrap gap-2">
                       <div className="flex justify-center items-center relative gap-1 px-3 py-1 rounded-3xl bg-[#c5dbc2]/[0.24] border border-[#668d61]">
-                        <Price className="w-5 h-5 relative" />
+                        <Price className="w-5 h-5 relative text-[#668d61]" />
                         <p className="text-sm font-medium text-left text-[#668d61]">{review.price}</p>
                       </div>
                       <div className="flex justify-center items-center relative gap-1 px-3 py-1 rounded-3xl bg-[#c5dbc2]/[0.24] border border-[#668d61]">
-                        <Seat className="w-5 h-5 relative" />
+                        <Seat className="w-5 h-5 relative text-[#668d61]" />
                         <p className="text-sm font-medium text-left text-[#668d61]">{review.seat_comfort}</p>
                       </div>
                       <div className="flex justify-center items-center relative gap-2 px-3 py-1 rounded-3xl bg-[#c5dbc2]/[0.24] border border-[#668d61]">
-                        <Wifi className="w-5 h-5 relative" />
+                        <Wifi className="w-5 h-5 relative text-[#668d61]" />
                         <p className="text-sm font-medium text-left text-[#668d61]">{review.wifi}</p>
                       </div>
                       <div className="flex justify-center items-center relative gap-1 px-3 py-1 rounded-3xl bg-[#c5dbc2]/[0.24] border border-[#668d61]">
-                        <Electricity className="w-5 h-5 relative" />
+                        <Electricity className="w-5 h-5 relative text-[#668d61]" />
                         <p className="text-sm font-medium text-left text-[#668d61]">{review.electricity_socket}</p>
                       </div>
                       <div className="flex justify-center items-center relative gap-1 px-3 py-1 rounded-3xl bg-[#c5dbc2]/[0.24] border border-[#668d61]">
-                        <Food className="w-5 h-5 relative" />
+                        <Food className="w-5 h-5 relative text-[#668d61]" />
                         <p className="text-sm font-medium text-left text-[#668d61]">{review.food_beverage}</p>
                       </div>
                       {review.noise > 0 && (
                         <div className="flex justify-center items-center relative gap-1 px-3 py-1 rounded-3xl bg-[#c5dbc2]/[0.24] border border-[#668d61]">
-                          <Speaker className="w-5 h-5 relative" />
+                          <Speaker className="w-5 h-5 relative text-[#668d61]" />
                           <p className="text-sm font-medium text-left text-[#668d61]">{review.noise}</p>
                         </div>
                       )}
                       {review.praying_room > 0 && (
                         <div className="flex justify-center items-center relative gap-1 px-3 py-1 rounded-3xl bg-[#c5dbc2]/[0.24] border border-[#668d61]">
-                          <Pray className="w-5 h-5 relative" />
+                          <Pray className="w-5 h-5 relative text-[#668d61]" />
                           <p className="text-sm font-medium text-left text-[#668d61]">{review.praying_room}</p>
                         </div>
                       )}
                       {review.hospitality > 0 && (
                         <div className="flex justify-center items-center relative gap-1 px-3 py-1 rounded-3xl bg-[#c5dbc2]/[0.24] border border-[#668d61]">
-                          <Smile className="w-5 h-5 relative" />
+                          <Smile className="w-5 h-5 relative text-[#668d61]" />
                           <p className="text-sm font-medium text-left text-[#668d61]">{review.hospitality}</p>
                         </div>
                       )}
                       {review.toilet > 0 && (
                         <div className="flex justify-center items-center relative gap-1 px-3 py-1 rounded-3xl bg-[#c5dbc2]/[0.24] border border-[#668d61]">
-                          <Lighting className="w-5 h-5 relative" />
+                          <Lighting className="w-5 h-5 relative text-[#668d61]" />
                           <p className="text-sm font-medium text-left text-[#668d61]">{review.toilet}</p>
                         </div>
                       )}
                       {review.parking > 0 && (
                         <div className="flex justify-center items-center relative gap-1 px-3 py-1 rounded-3xl bg-[#c5dbc2]/[0.24] border border-[#668d61]">
-                          <Park className="w-5 h-5 relative" />
+                          <Park className="w-5 h-5 relative text-[#668d61]" />
                           <p className="text-sm font-medium text-left text-[#668d61]">{review.parking}</p>
                         </div>
                       )}

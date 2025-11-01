@@ -310,7 +310,7 @@ const CafeCard = ({ cafe, onEdit, onDelete }: CafeCardProps) => {
         >
           {badges.map((badge, index) => (
             <div key={index} className="flex justify-center items-center relative gap-1 px-3 py-1 rounded-3xl bg-[#c5dbc2]/[0.24] border border-[#668d61] flex-shrink-0 pointer-events-none">
-              <badge.icon className="w-5 h-5 relative" />
+              <badge.icon className="w-5 h-5 relative text-[#668d61]" />
               <p className="text-xs font-medium text-left text-[#668d61]">{badge.value}</p>
             </div>
           ))}

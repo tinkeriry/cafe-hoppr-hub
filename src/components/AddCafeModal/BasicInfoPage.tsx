@@ -276,6 +276,92 @@ const BasicInfoPage: React.FC<BasicInfoPageProps> = ({ onNext }) => {
 
   return (
     <div className="space-y-2.5">
+      {/* Contributor Name */}
+      <div>
+        <Label htmlFor="contributor_name">Contributor Name *</Label>
+        <div className="relative" ref={contributorDropdownRef}>
+          <Input
+            id="contributor_name"
+            placeholder="Select or add contributor name"
+            value={formData.contributor_name}
+            onChange={(e) => updateFormData({ contributor_name: e.target.value })}
+            onClick={() => setIsContributorDropdownOpen(!isContributorDropdownOpen)}
+            required
+            className="pr-10 cursor-pointer"
+            readOnly
+          />
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 9L12 15L18 9" stroke="#746650" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          
+          {/* Dropdown */}
+          {isContributorDropdownOpen && (
+            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              {/* Search Input */}
+              <div className="p-3 border-b border-gray-100">
+                <Input
+                  ref={contributorSearchInputRef}
+                  placeholder="Search existing contributors to avoid duplicates or add unique contributor name"
+                  value={contributorSearchQuery}
+                  onChange={handleContributorSearchChange}
+                  className="w-full"
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddNewContributor()}
+                />
+              </div>
+              
+              {/* Existing Contributors List */}
+              <div className="max-h-40 overflow-y-auto">
+                {isContributorLoading ? (
+                  <div className="p-3 text-center text-sm text-gray-500">
+                    Loading contributors...
+                  </div>
+                ) : filteredContributors.length === 0 ? (
+                  <div className="p-3 text-center text-sm text-gray-500">
+                    {contributorSearchQuery.trim() ? 'No existing contributors found matching your search' : 'No existing contributors found'}
+                  </div>
+                ) : (
+                  <div className="p-2">
+                    <div className="text-xs text-gray-500 px-3 py-1 font-medium">
+                      Existing contributors:
+                    </div>
+                    {filteredContributors.map((contributor, index) => (
+                      <div
+                        key={index}
+                        onClick={() => {
+                          updateFormData({ contributor_name: contributor });
+                          setIsContributorDropdownOpen(false);
+                          setContributorSearchQuery('');
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm text-[#746650] hover:bg-gray-100 cursor-pointer rounded transition-colors"
+                      >
+                        ✓ {contributor}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              {/* Add New Contributor Button */}
+              {contributorSearchQuery.trim() && !contributors.some(contributor => contributor.toLowerCase() === contributorSearchQuery.toLowerCase()) && (
+                <div className="p-3 border-t border-gray-100">
+                  <Button 
+                    type="button" 
+                    variant="cafe" 
+                    size="sm"
+                    onClick={handleAddNewContributor}
+                    className="w-full"
+                  >
+                    Add "{contributorSearchQuery}"
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+      
       {/* Cafe Name */}
       <div>
         <Label htmlFor="name">Cafe Name *</Label>
@@ -482,92 +568,6 @@ const BasicInfoPage: React.FC<BasicInfoPageProps> = ({ onNext }) => {
           rows={4}
           required
         />
-      </div>
-
-      {/* Contributor Name */}
-      <div>
-        <Label htmlFor="contributor_name">Contributor Name *</Label>
-        <div className="relative" ref={contributorDropdownRef}>
-          <Input
-            id="contributor_name"
-            placeholder="Select or add contributor name"
-            value={formData.contributor_name}
-            onChange={(e) => updateFormData({ contributor_name: e.target.value })}
-            onClick={() => setIsContributorDropdownOpen(!isContributorDropdownOpen)}
-            required
-            className="pr-10 cursor-pointer"
-            readOnly
-          />
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M6 9L12 15L18 9" stroke="#746650" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          
-          {/* Dropdown */}
-          {isContributorDropdownOpen && (
-            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-              {/* Search Input */}
-              <div className="p-3 border-b border-gray-100">
-                <Input
-                  ref={contributorSearchInputRef}
-                  placeholder="Search existing contributors to avoid duplicates or add unique contributor name"
-                  value={contributorSearchQuery}
-                  onChange={handleContributorSearchChange}
-                  className="w-full"
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddNewContributor()}
-                />
-              </div>
-              
-              {/* Existing Contributors List */}
-              <div className="max-h-40 overflow-y-auto">
-                {isContributorLoading ? (
-                  <div className="p-3 text-center text-sm text-gray-500">
-                    Loading contributors...
-                  </div>
-                ) : filteredContributors.length === 0 ? (
-                  <div className="p-3 text-center text-sm text-gray-500">
-                    {contributorSearchQuery.trim() ? 'No existing contributors found matching your search' : 'No existing contributors found'}
-                  </div>
-                ) : (
-                  <div className="p-2">
-                    <div className="text-xs text-gray-500 px-3 py-1 font-medium">
-                      Existing contributors:
-                    </div>
-                    {filteredContributors.map((contributor, index) => (
-                      <div
-                        key={index}
-                        onClick={() => {
-                          updateFormData({ contributor_name: contributor });
-                          setIsContributorDropdownOpen(false);
-                          setContributorSearchQuery('');
-                        }}
-                        className="w-full px-3 py-2 text-left text-sm text-[#746650] hover:bg-gray-100 cursor-pointer rounded transition-colors"
-                      >
-                        ✓ {contributor}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              
-              {/* Add New Contributor Button */}
-              {contributorSearchQuery.trim() && !contributors.some(contributor => contributor.toLowerCase() === contributorSearchQuery.toLowerCase()) && (
-                <div className="p-3 border-t border-gray-100">
-                  <Button 
-                    type="button" 
-                    variant="cafe" 
-                    size="sm"
-                    onClick={handleAddNewContributor}
-                    className="w-full"
-                  >
-                    Add "{contributorSearchQuery}"
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Next Button */}
