@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import FilledYellowStar from "@/components/icons/FilledYellowStar";
@@ -48,6 +49,7 @@ interface CafeCardProps {
 }
 
 const CafeCard = ({ cafe, onEdit, onDelete }: CafeCardProps) => {
+  const navigate = useNavigate();
   const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -224,7 +226,7 @@ const CafeCard = ({ cafe, onEdit, onDelete }: CafeCardProps) => {
         <div className="flex justify-end">
           <Button
             variant="cafe"
-            onClick={() => window.open(cafe.cafe_location_link, "_blank")}
+            onClick={() => navigate(`/cafe/${cafe.cafe_id}`)}
             className="rounded-full px-6 py-2"
           >
             See Details
