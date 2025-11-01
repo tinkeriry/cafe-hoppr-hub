@@ -4,6 +4,7 @@ import { sql } from "@/integrations/neon/client";
 import { Cafe, Review } from "@/integrations/neon/types";
 import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
+import AddCafeModal from "@/components/AddCafeModal";
 import FilledYellowStar from "@/components/icons/FilledYellowStar";
 import HalfFilledYellowStar from "@/components/icons/HalfFilledYellowStar";
 import EmptyYellowStar from "@/components/icons/EmptyYellowStar";
@@ -27,6 +28,7 @@ const CafeDetail = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const fetchCafeDetails = useCallback(async () => {
     setIsLoading(true);
@@ -130,7 +132,7 @@ const CafeDetail = () => {
           </button>
           <Button
             variant="cafe"
-            onClick={() => navigate("/")}
+            onClick={() => setShowAddModal(true)}
             className="text-sm"
           >
             Add Cafe
@@ -306,6 +308,16 @@ const CafeDetail = () => {
       </div>
 
       <Footer />
+
+      {/* Add Cafe Modal */}
+      <AddCafeModal
+        open={showAddModal}
+        onOpenChange={setShowAddModal}
+        onSuccess={() => {
+          // Optionally refresh the page or navigate after adding
+          fetchCafeDetails();
+        }}
+      />
     </div>
   );
 };
