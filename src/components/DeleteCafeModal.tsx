@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { sql } from "@/integrations/neon/client";
 import { toast } from "sonner";
@@ -35,35 +35,29 @@ const DeleteCafeModal = ({ open, onOpenChange, cafeId, cafeName, onSuccess }: De
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <button
-          onClick={() => onOpenChange(false)}
-          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100"
-        >
-          <span className="text-2xl">✕</span>
-        </button>
+      <DialogContent className="sm:max-w-md min-h-[300px] gap-12">
+        <div className="mt-16 flex flex-col justify-center items-center">
+          <p className="text-center text-lg font-medium text-[#604926] leading-relaxed">
+            Are you sure to delete "{cafeName}" from the list?
+          </p>
+        </div>
 
-        <DialogHeader>
-          <DialogTitle>Delete Cafe</DialogTitle>
-          <DialogDescription className="pt-4">
-            Are you sure you want to delete "{cafeName}"? This action cannot be undone.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="flex gap-3 justify-end pt-4">
+        <div className="flex gap-3 justify-center pt-2">
           <Button
-            variant="outline"
+            variant="cafe"
             onClick={() => onOpenChange(false)}
             disabled={loading}
+            className="px-8 py-2 bg-[#E2DACF] text-white hover:bg-[#d4c4a8] border-none rounded-full"
           >
-            No, Keep it
+            Cancel
           </Button>
           <Button
-            variant="destructive"
+            variant="danger"
             onClick={handleDelete}
             disabled={loading}
+            className="px-8 py-2"
           >
-            {loading ? "Deleting..." : "Yes, Delete"}
+            {loading ? "Deleting..." : "Yep"}
           </Button>
         </div>
       </DialogContent>
