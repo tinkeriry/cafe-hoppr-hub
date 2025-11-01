@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
 import FilledYellowStar from "@/components/icons/FilledYellowStar";
 import HalfFilledYellowStar from "@/components/icons/HalfFilledYellowStar";
+import EmptyYellowStar from "@/components/icons/EmptyYellowStar";
 import Price from '@/components/icons/Price';
 import Food from '@/components/icons/Food';
 import Seat from '@/components/icons/Seat';
@@ -76,12 +77,14 @@ const CafeDetail = () => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.1 && rating % 1 <= 0.9;
 
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(<FilledYellowStar key={i} className="w-5 h-5" />);
-    }
-
-    if (hasHalfStar) {
-      stars.push(<HalfFilledYellowStar key="half" className="w-5 h-5" />);
+    for (let i = 1; i <= 10; i++) {
+      if (i <= fullStars) {
+        stars.push(<FilledYellowStar key={i} className="w-5 h-5" />);
+      } else if (i === fullStars + 1 && hasHalfStar) {
+        stars.push(<HalfFilledYellowStar key={i} className="w-5 h-5" />);
+      } else {
+        stars.push(<EmptyYellowStar key={i} className="w-5 h-5" />);
+      }
     }
 
     return stars;
@@ -237,7 +240,7 @@ const CafeDetail = () => {
                       <span className="font-medium">{review.star_rating}</span>
                     </div>
 
-                    <p className="text-sm text-muted-foreground mb-4">
+                    <p className="text-sm text-muted-foreground mb-4 min-h-[4rem] line-clamp-3">
                       {review.review}
                     </p>
 
