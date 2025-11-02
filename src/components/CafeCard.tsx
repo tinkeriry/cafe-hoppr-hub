@@ -17,6 +17,7 @@ import Pray from "@/components/icons/Pray";
 import Smile from "@/components/icons/Smile";
 import Park from "@/components/icons/Park";
 import ThreeDots from "@/components/icons/ThreeDots";
+import Clock from "@/components/icons/Clock";
 import { MapPin } from "lucide-react";
 import { Review } from "@/integrations/neon/types";
 
@@ -28,6 +29,9 @@ interface CafeCardProps {
     cafe_location_link: string;
     location_id?: string;
     location_name?: string;
+    operational_days?: string[];
+    opening_hour?: string;
+    closing_hour?: string;
     reviews?: Review[];
     status: string;
     created_at: string;
@@ -354,6 +358,16 @@ const CafeCard = ({ cafe, onEdit, onDelete, onAddReview }: CafeCardProps) => {
 
       <div className="p-4">
         <h3 className="text-xl font-semibold mb-2">{cafe.name}</h3>
+
+        {/* Operational Hours */}
+        {cafe.opening_hour && cafe.closing_hour && (
+          <div className="flex items-center gap-1 mb-2">
+            <Clock className="w-4 h-4 text-[#746650]" />
+            <span className="text-sm text-[#746650]">
+              {cafe.opening_hour.substring(0, 5)} - {cafe.closing_hour.substring(0, 5)}
+            </span>
+          </div>
+        )}
 
         {/* Rating display with custom stars */}
         {latestReview && (

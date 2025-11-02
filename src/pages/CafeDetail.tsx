@@ -21,8 +21,10 @@ import Pray from "@/components/icons/Pray";
 import Smile from "@/components/icons/Smile";
 import Park from "@/components/icons/Park";
 import ThreeDots from "@/components/icons/ThreeDots";
-import { ArrowLeft } from "lucide-react";
+import Clock from "@/components/icons/Clock";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 const CafeDetail = () => {
   const { cafeId } = useParams<{ cafeId: string }>();
@@ -44,15 +46,17 @@ const CafeDetail = () => {
   const fetchCafeDetails = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Fetch cafe details
+      // Fetch cafe details with location
       const cafeData = (await sql`
         SELECT 
-          cafe_id, name, cafe_photo, cafe_location_link,
-          operational_days, opening_hour, closing_hour,
-          status, created_at, updated_at
-        FROM cafes
-        WHERE cafe_id = ${cafeId} AND status = 'approved'
-      `) as Cafe[];
+          c.cafe_id, c.name, c.cafe_photo, c.cafe_location_link,
+          c.location_id, c.operational_days, c.opening_hour, c.closing_hour,
+          c.status, c.created_at, c.updated_at,
+          l.name as location_name
+        FROM cafes c
+        LEFT JOIN locations l ON c.location_id = l.location_id
+        WHERE c.cafe_id = ${cafeId} AND c.status = 'approved'
+      `) as (Cafe & { location_name?: string })[];
 
       if (cafeData.length === 0) {
         toast.error("Cafe not found");
@@ -60,7 +64,30 @@ const CafeDetail = () => {
         return;
       }
 
-      setCafe(cafeData[0]);
+      // Parse operational_days if it's a string (PostgreSQL array format)
+      let operationalDays: string[] = [];
+      const cafeInfo = cafeData[0];
+      if (cafeInfo.operational_days) {
+        if (Array.isArray(cafeInfo.operational_days)) {
+          operationalDays = [...cafeInfo.operational_days];
+        } else if (typeof cafeInfo.operational_days === "string") {
+          try {
+            const parsed = JSON.parse(cafeInfo.operational_days);
+            operationalDays = Array.isArray(parsed) ? parsed : [];
+          } catch {
+            // PostgreSQL array format like "{MON,TUE}"
+            const operationalDaysStr = cafeInfo.operational_days as string;
+            const cleaned = operationalDaysStr.replace(/[{}"]/g, "");
+            operationalDays = cleaned ? cleaned.split(",").map((d) => d.trim()) : [];
+          }
+        }
+      }
+
+      setCafe({
+        ...cafeInfo,
+        location_name: cafeInfo.location_name,
+        operational_days: operationalDays,
+      });
 
       // Fetch all reviews for this cafe
       const reviewsData = (await sql`
@@ -224,53 +251,95 @@ const CafeDetail = () => {
       {/* Main Content */}
       <div className="flex-1">
         <div className="max-w-7xl mx-auto px-4 py-8">
-          {/* Cafe Header Info */}
-          <div className="mb-6">
-            <h1 className="text-3xl font-medium mb-2">{cafe.name}</h1>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex items-center gap-1">{renderStars(calculateAvgRating())}</div>
-              <span className="text-lg font-medium">{calculateAvgRating().toFixed(1)}</span>
-              <svg
-                width={6}
-                height={6}
-                viewBox="0 0 6 6"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-2 h-2 mx-1"
-                preserveAspectRatio="xMidYMid meet"
-              >
-                <circle cx={3} cy={3} r={3} fill="#D9D9D9" />
-              </svg>
-              <span className="text-sm text-muted-foreground">
-                {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
-              </span>
-            </div>
-            <Button
-              variant="cafe"
-              onClick={() => window.open(cafe.cafe_location_link, "_blank")}
-              className="rounded-full px-6 py-2"
-            >
-              See Location
-            </Button>
-          </div>
-
-          {/* Cafe Image */}
-          <div className="mb-8">
-            {imageError || !cafe.cafe_photo ? (
-              <div className="w-full h-[400px] bg-gradient-to-br from-[#e5d8c2] to-[#d4c4a8] flex items-center justify-center rounded-lg">
-                <div className="text-center">
-                  <div className="text-8xl mb-4">☕</div>
-                  <p className="text-[#746650] font-medium text-lg">No Image</p>
-                </div>
+          {/* Cafe Header Info and Image - Side by Side */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            {/* Left Column - Cafe Header Info */}
+            <div className="pt-4">
+              <h1 className="text-3xl font-medium mb-2">{cafe.name}</h1>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center gap-1">{renderStars(calculateAvgRating())}</div>
+                <span className="text-lg font-medium">{calculateAvgRating().toFixed(1)}</span>
+                <svg
+                  width={6}
+                  height={6}
+                  viewBox="0 0 6 6"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-2 h-2 mx-1"
+                  preserveAspectRatio="xMidYMid meet"
+                >
+                  <circle cx={3} cy={3} r={3} fill="#D9D9D9" />
+                </svg>
+                <span className="text-sm text-muted-foreground">
+                  {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
+                </span>
               </div>
-            ) : (
-              <img
-                src={cafe.cafe_photo}
-                alt={cafe.name}
-                className="w-full h-[400px] object-cover rounded-lg"
-                onError={handleImageError}
-              />
-            )}
+
+              {/* Location */}
+              {cafe.location_name && (
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-lg">📍</span>
+                  <span className="text-base font-medium text-[#604926]">{cafe.location_name}</span>
+                </div>
+              )}
+
+              {/* Operational Hours */}
+              {cafe.opening_hour && cafe.closing_hour && (
+                <div className="flex items-center gap-2 mb-4">
+                  <Clock className="w-5 h-5 text-[#746650]" />
+                  <span className="text-base text-[#746650]">
+                    {cafe.opening_hour.substring(0, 5)} - {cafe.closing_hour.substring(0, 5)}
+                  </span>
+                </div>
+              )}
+
+              {/* Operational Days */}
+              {cafe.operational_days && cafe.operational_days.length > 0 && (
+                <div className="mb-4">
+                  <div className="flex flex-wrap gap-2">
+                    {cafe.operational_days.map((day, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1 rounded-full bg-[#c5dbc2]/[0.24] border border-[#668d61] text-sm font-medium text-[#668d61]"
+                      >
+                        {day}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Location Link */}
+              <div className="flex items-center gap-2 mt-6">
+                <Button
+                  variant="cafe"
+                  onClick={() => window.open(cafe.cafe_location_link, "_blank")}
+                  className="rounded-full px-6 py-2"
+                >
+                  See Location
+                  <ExternalLink className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Right Column - Cafe Image */}
+            <div>
+              {imageError || !cafe.cafe_photo ? (
+                <div className="w-full h-[400px] bg-gradient-to-br from-[#e5d8c2] to-[#d4c4a8] flex items-center justify-center rounded-lg">
+                  <div className="text-center">
+                    <div className="text-8xl mb-4">☕</div>
+                    <p className="text-[#746650] font-medium text-lg">No Image</p>
+                  </div>
+                </div>
+              ) : (
+                <img
+                  src={cafe.cafe_photo}
+                  alt={cafe.name}
+                  className="w-full h-[400px] object-cover rounded-lg"
+                  onError={handleImageError}
+                />
+              )}
+            </div>
           </div>
 
           {/* Reviews Section */}
@@ -312,9 +381,16 @@ const CafeDetail = () => {
                     className="bg-white rounded-xl p-6 shadow-md relative"
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <p className="self-stretch text-base font-medium text-left text-[#604926]">
-                        {review.created_by}
-                      </p>
+                      <div>
+                        <p className="text-base font-medium text-left text-[#604926]">
+                          {review.created_by}
+                        </p>
+                        {review.created_at && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {format(new Date(review.created_at), "MMM d, yyyy")}
+                          </p>
+                        )}
+                      </div>
                       <button
                         ref={(el) => {
                           if (el) actionButtonRefs.current[review.review_id] = el;
