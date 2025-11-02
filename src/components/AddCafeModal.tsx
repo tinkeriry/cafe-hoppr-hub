@@ -40,12 +40,12 @@ const AddCafeModalContent = ({ open, onOpenChange, onSuccess }: AddCafeModalProp
       // Insert review
       await sql`
         INSERT INTO reviews (
-          cafe_id, review, star_rating,
+          cafe_id, review,
           price, wifi, seat_comfort, electricity_socket, food_beverage,
           praying_room, hospitality, toilet, noise, parking,
           created_by, created_at, updated_at
         ) VALUES (
-          ${cafeId}, ${formData.review}, ${formData.star_rating},
+          ${cafeId}, ${formData.review},
           ${formData.price}, ${formData.wifi}, ${formData.seat_comfort}, 
           ${formData.electricity_socket}, ${formData.food_beverage},
           ${formData.praying_room}, ${formData.hospitality}, ${formData.toilet}, 

@@ -103,10 +103,31 @@ const CafeDetail = () => {
     return stars;
   };
 
+  const calculateReviewRating = (review: Review) => {
+    // Calculate average rating for a single review from all its rating fields
+    const ratings: number[] = [];
+    if (review.price > 0) ratings.push(review.price);
+    if (review.wifi > 0) ratings.push(review.wifi);
+    if (review.seat_comfort > 0) ratings.push(review.seat_comfort);
+    if (review.food_beverage > 0) ratings.push(review.food_beverage);
+    if (review.hospitality > 0) ratings.push(review.hospitality);
+    if (review.parking > 0) ratings.push(review.parking);
+    if (review.electricity_socket > 0) ratings.push(review.electricity_socket);
+    if (review.praying_room > 0) ratings.push(review.praying_room);
+    if (review.toilet > 0) ratings.push(review.toilet);
+    if (review.noise > 0) ratings.push(review.noise);
+    if (ratings.length === 0) return 0;
+    const sum = ratings.reduce((acc, rating) => acc + rating, 0);
+    return sum / ratings.length;
+  };
+
   const calculateAvgRating = () => {
     if (reviews.length === 0) return 0;
-    const sum = reviews.reduce((acc, r) => acc + r.star_rating, 0);
-    return sum / reviews.length;
+    // Calculate average from all reviews' average ratings
+    const reviewRatings = reviews.map((r) => calculateReviewRating(r)).filter((r) => r > 0);
+    if (reviewRatings.length === 0) return 0;
+    const sum = reviewRatings.reduce((acc, rating) => acc + rating, 0);
+    return sum / reviewRatings.length;
   };
 
   const handleImageError = () => {
@@ -334,9 +355,11 @@ const CafeDetail = () => {
                     </div>
                     <div className="flex items-center gap-2 mb-2">
                       <div className="flex items-center gap-1">
-                        {renderStars(review.star_rating)}
+                        {renderStars(calculateReviewRating(review))}
                       </div>
-                      <span className="font-medium">{review.star_rating}</span>
+                      <span className="font-medium">
+                        {calculateReviewRating(review).toFixed(1)}
+                      </span>
                     </div>
 
                     <p className="text-sm text-muted-foreground mb-4 min-h-[4rem] line-clamp-3">

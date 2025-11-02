@@ -7,9 +7,6 @@ import { Button } from "@/components/ui/button";
 import { sql } from "@/integrations/neon/client";
 import { toast } from "sonner";
 import { Cafe } from "@/integrations/neon/types";
-import EmptyStar from "@/components/icons/EmptyStar";
-import FilledYellowStar from "@/components/icons/FilledYellowStar";
-import DefaultFilledStar from "@/components/icons/DefaultFilledStar";
 import Price from "@/components/icons/Price";
 import Food from "@/components/icons/Food";
 import Seat from "@/components/icons/Seat";
@@ -20,6 +17,8 @@ import Lighting from "@/components/icons/Lighting";
 import Pray from "@/components/icons/Pray";
 import Smile from "@/components/icons/Smile";
 import Park from "@/components/icons/Park";
+import FilledYellowStar from "@/components/icons/FilledYellowStar";
+import EmptyStar from "@/components/icons/EmptyStar";
 
 interface AddReviewModalProps {
   open: boolean;
@@ -34,7 +33,6 @@ const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalP
   // Page 1 fields
   const [contributorName, setContributorName] = useState("");
   const [cafeName, setCafeName] = useState("");
-  const [starRating, setStarRating] = useState(6);
   const [review, setReview] = useState("");
 
   // Page 2 fields
@@ -72,7 +70,6 @@ const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalP
       setCurrentPage(1);
       setContributorName("");
       setCafeName(cafe?.name || "");
-      setStarRating(6);
       setReview("");
       setPrice(0);
       setWifi(0);
@@ -164,47 +161,6 @@ const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalP
     toast.success("New contributor added");
   };
 
-  const handleRatingChange = (rating: number) => {
-    // Stars 1-6 are locked (non-clickable). For 7-10, allow toggle.
-    if (rating <= 6) return;
-    const isSame = starRating === rating;
-    const next = isSame ? Math.max(6, rating - 1) : rating;
-    setStarRating(next);
-  };
-
-  const renderStars = () => {
-    const stars = [];
-    for (let i = 1; i <= 10; i++) {
-      const isLocked = i <= 6;
-      const isFilled = i <= Math.max(6, starRating);
-
-      if (isLocked) {
-        stars.push(
-          <span key={i} className="cursor-default select-none">
-            <DefaultFilledStar className="w-8 h-8 md:w-10 md:h-10" />
-          </span>
-        );
-      } else {
-        stars.push(
-          <button
-            key={i}
-            type="button"
-            onClick={() => handleRatingChange(i)}
-            className="transition-transform duration-200 hover:scale-110"
-            aria-label={`Set rating to ${i} stars`}
-          >
-            {isFilled ? (
-              <FilledYellowStar className="w-8 h-8 md:w-10 md:h-10" />
-            ) : (
-              <EmptyStar className="w-8 h-8 md:w-10 md:h-10" />
-            )}
-          </button>
-        );
-      }
-    }
-    return stars;
-  };
-
   const handleRatingFieldChange = (field: string, rating: number) => {
     switch (field) {
       case "price":
@@ -281,12 +237,7 @@ const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalP
   );
 
   const isPage1Valid = () => {
-    return (
-      contributorName.trim() !== "" &&
-      cafeName.trim() !== "" &&
-      starRating >= 6 &&
-      review.trim() !== ""
-    );
+    return contributorName.trim() !== "" && cafeName.trim() !== "" && review.trim() !== "";
   };
 
   const isPage2Valid = () => {
@@ -319,12 +270,12 @@ const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalP
       // Insert review
       await sql`
         INSERT INTO reviews (
-          cafe_id, review, star_rating,
+          cafe_id, review,
           price, wifi, seat_comfort, electricity_socket, food_beverage,
           praying_room, hospitality, toilet, noise, parking,
           created_by, created_at, updated_at
         ) VALUES (
-          ${cafeId}, ${review}, ${starRating},
+          ${cafeId}, ${review},
           ${price}, ${wifi}, ${seatComfort}, 
           ${electricitySocket}, ${foodBeverage},
           ${prayingRoom}, ${hospitality}, ${toilet}, 
@@ -341,7 +292,6 @@ const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalP
       setCurrentPage(1);
       setContributorName("");
       setCafeName(cafe?.name || "");
-      setStarRating(6);
       setReview("");
       setPrice(0);
       setWifi(0);
@@ -498,20 +448,6 @@ const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalP
               />
               <p className="text-xs text-[#8b7a5f] mt-1">
                 This review will be added to the selected cafe
-              </p>
-            </div>
-
-            {/* Rating */}
-            <div>
-              <Label>Rating *</Label>
-              <div className="flex items-center gap-0.5 sm:gap-1 mt-2 flex-wrap">
-                {renderStars()}
-              </div>
-              {starRating > 0 && (
-                <p className="text-sm text-[#746650] mt-1">{starRating}/10 stars</p>
-              )}
-              <p className="text-xs text-[#8b7a5f] mt-1">
-                minimum rating is 6, just to make sure you enter a great cafe for WFC :p
               </p>
             </div>
 

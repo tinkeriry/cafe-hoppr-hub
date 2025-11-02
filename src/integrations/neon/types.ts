@@ -9,7 +9,6 @@ export interface Review {
   review_id: string;
   cafe_id: string;
   review: string;
-  star_rating: number;
   price: number;
   wifi: number;
   seat_comfort: number;
@@ -49,7 +48,6 @@ export interface CafeFormData {
   cafe_location_link: string;
   location_id: string;
   review: string;
-  star_rating: number;
   operational_days: string[];
   opening_hour: string;
   closing_hour: string;

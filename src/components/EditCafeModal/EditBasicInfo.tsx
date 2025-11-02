@@ -108,7 +108,6 @@ const EditBasicInfo: React.FC<EditBasicInfoProps> = ({ onSubmit, loading, cafeId
         cafe_photo: "",
         cafe_location_link: "",
         review: "",
-        star_rating: 0,
         price: 0,
         wifi: 0,
         seat_comfort: 0,

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { sql } from "@/integrations/neon/client";
-import { Cafe, Location } from "@/integrations/neon/types";
+import { Cafe, Location, Review } from "@/integrations/neon/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import CafeCard from "@/components/CafeCard";
@@ -137,7 +137,6 @@ const Index = () => {
                 'review_id', r.review_id,
                 'cafe_id', r.cafe_id,
                 'review', r.review,
-                'star_rating', r.star_rating,
                 'price', r.price,
                 'wifi', r.wifi,
                 'seat_comfort', r.seat_comfort,
@@ -226,29 +225,41 @@ const Index = () => {
     setShowReviewModal(true);
   };
 
+  const calculateAvgRating = (reviews: Review[]) => {
+    if (!reviews || reviews.length === 0) return 0;
+    const allRatings: number[] = [];
+    reviews.forEach((r) => {
+      if (r.price > 0) allRatings.push(r.price);
+      if (r.wifi > 0) allRatings.push(r.wifi);
+      if (r.seat_comfort > 0) allRatings.push(r.seat_comfort);
+      if (r.food_beverage > 0) allRatings.push(r.food_beverage);
+      if (r.hospitality > 0) allRatings.push(r.hospitality);
+      if (r.parking > 0) allRatings.push(r.parking);
+      if (r.electricity_socket > 0) allRatings.push(r.electricity_socket);
+      if (r.praying_room > 0) allRatings.push(r.praying_room);
+      if (r.toilet > 0) allRatings.push(r.toilet);
+      if (r.noise > 0) allRatings.push(r.noise);
+    });
+    if (allRatings.length === 0) return 0;
+    const sum = allRatings.reduce((acc, rating) => acc + rating, 0);
+    return sum / allRatings.length;
+  };
+
   const handleSort = (sortType: string) => {
     const sortedCafes = [...filteredCafes];
 
     switch (sortType) {
       case "Sort by Highest Rating":
         sortedCafes.sort((a, b) => {
-          const avgA = a.reviews?.length
-            ? a.reviews.reduce((sum, r) => sum + r.star_rating, 0) / a.reviews.length
-            : 0;
-          const avgB = b.reviews?.length
-            ? b.reviews.reduce((sum, r) => sum + r.star_rating, 0) / b.reviews.length
-            : 0;
+          const avgA = a.reviews?.length ? calculateAvgRating(a.reviews || []) : 0;
+          const avgB = b.reviews?.length ? calculateAvgRating(b.reviews || []) : 0;
           return avgB - avgA;
         });
         break;
       case "Sort by Lowest Rating":
         sortedCafes.sort((a, b) => {
-          const avgA = a.reviews?.length
-            ? a.reviews.reduce((sum, r) => sum + r.star_rating, 0) / a.reviews.length
-            : 0;
-          const avgB = b.reviews?.length
-            ? b.reviews.reduce((sum, r) => sum + r.star_rating, 0) / b.reviews.length
-            : 0;
+          const avgA = a.reviews?.length ? calculateAvgRating(a.reviews || []) : 0;
+          const avgB = b.reviews?.length ? calculateAvgRating(b.reviews || []) : 0;
           return avgA - avgB;
         });
         break;

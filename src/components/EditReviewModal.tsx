@@ -9,9 +9,6 @@ import { sql } from "@/integrations/neon/client";
 import { toast } from "sonner";
 import { Review } from "@/integrations/neon/types";
 import { Info } from "lucide-react";
-import EmptyStar from "@/components/icons/EmptyStar";
-import FilledYellowStar from "@/components/icons/FilledYellowStar";
-import DefaultFilledStar from "@/components/icons/DefaultFilledStar";
 import Price from "@/components/icons/Price";
 import Food from "@/components/icons/Food";
 import Seat from "@/components/icons/Seat";
@@ -22,6 +19,8 @@ import Lighting from "@/components/icons/Lighting";
 import Pray from "@/components/icons/Pray";
 import Smile from "@/components/icons/Smile";
 import Park from "@/components/icons/Park";
+import FilledYellowStar from "@/components/icons/FilledYellowStar";
+import EmptyStar from "@/components/icons/EmptyStar";
 
 interface EditReviewModalProps {
   open: boolean;
@@ -43,7 +42,6 @@ const EditReviewModal = ({
   // Page 1 fields
   const [contributorName, setContributorName] = useState("");
   const [cafeNameDisplay, setCafeNameDisplay] = useState("");
-  const [starRating, setStarRating] = useState(6);
   const [reviewText, setReviewText] = useState("");
 
   // Page 2 fields
@@ -75,7 +73,6 @@ const EditReviewModal = ({
       // Pre-fill form with review data
       setContributorName(review.created_by || "");
       setCafeNameDisplay(cafeName || "");
-      setStarRating(review.star_rating || 6);
       setReviewText(review.review || "");
       setPrice(review.price || 0);
       setWifi(review.wifi || 0);
@@ -93,7 +90,6 @@ const EditReviewModal = ({
       setCurrentPage(1);
       setContributorName("");
       setCafeNameDisplay("");
-      setStarRating(6);
       setReviewText("");
       setPrice(0);
       setWifi(0);
@@ -183,47 +179,6 @@ const EditReviewModal = ({
     setIsContributorDropdownOpen(false);
     setContributorSearchQuery("");
     toast.success("New contributor added");
-  };
-
-  const handleRatingChange = (rating: number) => {
-    // Stars 1-6 are locked (non-clickable). For 7-10, allow toggle.
-    if (rating <= 6) return;
-    const isSame = starRating === rating;
-    const next = isSame ? Math.max(6, rating - 1) : rating;
-    setStarRating(next);
-  };
-
-  const renderStars = () => {
-    const stars = [];
-    for (let i = 1; i <= 10; i++) {
-      const isLocked = i <= 6;
-      const isFilled = i <= Math.max(6, starRating);
-
-      if (isLocked) {
-        stars.push(
-          <span key={i} className="cursor-default select-none">
-            <DefaultFilledStar className="w-8 h-8 md:w-10 md:h-10" />
-          </span>
-        );
-      } else {
-        stars.push(
-          <button
-            key={i}
-            type="button"
-            onClick={() => handleRatingChange(i)}
-            className="transition-transform duration-200 hover:scale-110"
-            aria-label={`Set rating to ${i} stars`}
-          >
-            {isFilled ? (
-              <FilledYellowStar className="w-8 h-8 md:w-10 md:h-10" />
-            ) : (
-              <EmptyStar className="w-8 h-8 md:w-10 md:h-10" />
-            )}
-          </button>
-        );
-      }
-    }
-    return stars;
   };
 
   const handleRatingFieldChange = (field: string, rating: number) => {
@@ -333,10 +288,7 @@ const EditReviewModal = ({
 
   const isPage1Valid = () => {
     return (
-      contributorName.trim() !== "" &&
-      cafeNameDisplay.trim() !== "" &&
-      starRating >= 6 &&
-      reviewText.trim() !== ""
+      contributorName.trim() !== "" && cafeNameDisplay.trim() !== "" && reviewText.trim() !== ""
     );
   };
 
@@ -369,7 +321,6 @@ const EditReviewModal = ({
       await sql`
         UPDATE reviews SET
           review = ${reviewText},
-          star_rating = ${starRating},
           price = ${price},
           wifi = ${wifi},
           seat_comfort = ${seatComfort},
@@ -393,7 +344,6 @@ const EditReviewModal = ({
       setCurrentPage(1);
       setContributorName("");
       setCafeNameDisplay("");
-      setStarRating(6);
       setReviewText("");
       setPrice(0);
       setWifi(0);
@@ -550,20 +500,6 @@ const EditReviewModal = ({
               />
               <p className="text-xs text-[#8b7a5f] mt-1">
                 This review belongs to the selected cafe
-              </p>
-            </div>
-
-            {/* Rating */}
-            <div>
-              <Label>Rating *</Label>
-              <div className="flex items-center gap-0.5 sm:gap-1 mt-2 flex-wrap">
-                {renderStars()}
-              </div>
-              {starRating > 0 && (
-                <p className="text-sm text-[#746650] mt-1">{starRating}/10 stars</p>
-              )}
-              <p className="text-xs text-[#8b7a5f] mt-1">
-                minimum rating is 6, just to make sure you enter a great cafe for WFC :p
               </p>
             </div>
 

@@ -18,6 +18,7 @@ import Smile from "@/components/icons/Smile";
 import Park from "@/components/icons/Park";
 import ThreeDots from "@/components/icons/ThreeDots";
 import { MapPin } from "lucide-react";
+import { Review } from "@/integrations/neon/types";
 
 interface CafeCardProps {
   cafe: {
@@ -27,25 +28,7 @@ interface CafeCardProps {
     cafe_location_link: string;
     location_id?: string;
     location_name?: string;
-    reviews?: {
-      review_id: string;
-      cafe_id: string;
-      review: string;
-      star_rating: number;
-      price: number;
-      wifi: number;
-      seat_comfort: number;
-      electricity_socket: number;
-      food_beverage: number;
-      praying_room: number;
-      hospitality: number;
-      toilet: number;
-      noise: number;
-      parking: number;
-      created_by: string;
-      created_at: string;
-      updated_at: string;
-    }[];
+    reviews?: Review[];
     status: string;
     created_at: string;
     updated_at: string;
@@ -245,10 +228,28 @@ const CafeCard = ({ cafe, onEdit, onDelete, onAddReview }: CafeCardProps) => {
     { icon: Park, value: avgRating("parking") },
   ].filter((badge) => badge.value && badge.value > 0);
 
-  // Calculate average star rating
-  const avgStarRating = cafe.reviews?.length
-    ? cafe.reviews.reduce((sum, r) => sum + r.star_rating, 0) / cafe.reviews.length
-    : 0;
+  // Calculate average rating from all rating fields in all reviews
+  const calculateAvgRating = (reviews: Review[]) => {
+    if (!reviews || reviews.length === 0) return 0;
+    const allRatings: number[] = [];
+    reviews.forEach((r) => {
+      if (r.price > 0) allRatings.push(r.price);
+      if (r.wifi > 0) allRatings.push(r.wifi);
+      if (r.seat_comfort > 0) allRatings.push(r.seat_comfort);
+      if (r.food_beverage > 0) allRatings.push(r.food_beverage);
+      if (r.hospitality > 0) allRatings.push(r.hospitality);
+      if (r.parking > 0) allRatings.push(r.parking);
+      if (r.electricity_socket > 0) allRatings.push(r.electricity_socket);
+      if (r.praying_room > 0) allRatings.push(r.praying_room);
+      if (r.toilet > 0) allRatings.push(r.toilet);
+      if (r.noise > 0) allRatings.push(r.noise);
+    });
+    if (allRatings.length === 0) return 0;
+    const sum = allRatings.reduce((acc, rating) => acc + rating, 0);
+    return sum / allRatings.length;
+  };
+
+  const avgStarRating = calculateAvgRating(cafe.reviews || []);
 
   const renderStars = (rating: number) => {
     const stars = [];

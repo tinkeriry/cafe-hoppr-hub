@@ -5,9 +5,6 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useCafeForm } from "@/contexts/CafeFormContext";
 import Clock from "@/components/icons/Clock";
-import EmptyStar from "@/components/icons/EmptyStar";
-import FilledYellowStar from "@/components/icons/FilledYellowStar";
-import DefaultFilledStar from "@/components/icons/DefaultFilledStar";
 import { sql } from "@/integrations/neon/client";
 import { Cafe, Location } from "@/integrations/neon/types";
 import { toast } from "sonner";
@@ -48,14 +45,6 @@ const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
     fetchCafes();
     fetchContributors();
     fetchLocations();
-  }, []);
-
-  // Ensure initial rating displays at least 6 filled stars on first render
-  useEffect(() => {
-    if (formData.star_rating < 6) {
-      updateFormData({ star_rating: 6 });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -151,7 +140,6 @@ const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
         cafe_photo: "",
         cafe_location_link: "",
         review: "",
-        star_rating: 0,
         price: 0,
         wifi: 0,
         seat_comfort: 0,
@@ -293,14 +281,6 @@ const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
     return openingMinutes < closingMinutes;
   };
 
-  const handleRatingChange = (rating: number) => {
-    // Stars 1-6 are locked (non-clickable). For 7-10, allow toggle.
-    if (rating <= 6) return;
-    const isSame = formData.star_rating === rating;
-    const next = isSame ? Math.max(6, rating - 1) : rating;
-    updateFormData({ star_rating: next });
-  };
-
   const isFormValid = () => {
     return (
       formData.name.trim() !== "" &&
@@ -309,7 +289,6 @@ const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
       formData.cafe_location_link.trim() !== "" &&
       isValidUrl(formData.cafe_location_link) &&
       formData.review.trim() !== "" &&
-      formData.star_rating >= 6 &&
       formData.operational_days.length > 0 &&
       formData.opening_hour.trim() !== "" &&
       formData.closing_hour.trim() !== "" &&
@@ -317,39 +296,6 @@ const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
       formData.contributor_name.trim() !== "" &&
       formData.location_id.trim() !== ""
     );
-  };
-
-  const renderStars = () => {
-    const stars = [];
-    for (let i = 1; i <= 10; i++) {
-      const isLocked = i <= 6; // first six locked
-      const isFilled = i <= Math.max(6, formData.star_rating);
-
-      if (isLocked) {
-        stars.push(
-          <span key={i} className="cursor-default select-none">
-            <DefaultFilledStar className="w-8 h-8 md:w-10 md:h-10" />
-          </span>
-        );
-      } else {
-        stars.push(
-          <button
-            key={i}
-            type="button"
-            onClick={() => handleRatingChange(i)}
-            className="transition-transform duration-200 hover:scale-110"
-            aria-label={`Set rating to ${i} stars`}
-          >
-            {isFilled ? (
-              <FilledYellowStar className="w-8 h-8 md:w-10 md:h-10" />
-            ) : (
-              <EmptyStar className="w-8 h-8 md:w-10 md:h-10" />
-            )}
-          </button>
-        );
-      }
-    }
-    return stars;
   };
 
   return (
@@ -680,18 +626,6 @@ const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
             Please enter a valid URL (e.g., https://maps.google.com/?q=Cafe+Name)
           </p>
         )}
-      </div>
-
-      {/* Rating */}
-      <div>
-        <Label>Rating *</Label>
-        <div className="flex items-center gap-0.5 sm:gap-1 mt-2 flex-wrap">{renderStars()}</div>
-        {formData.star_rating > 0 && (
-          <p className="text-sm text-[#746650] mt-1">{formData.star_rating}/10 stars</p>
-        )}
-        <p className="text-xs text-[#8b7a5f] mt-1">
-          minimum rating is 6, just to make sure you enter a great cafe for WFC :p
-        </p>
       </div>
 
       {/* Operational Days */}
