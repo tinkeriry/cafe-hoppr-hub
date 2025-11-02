@@ -76,12 +76,13 @@ const EditCafeModalContent = ({ open, onOpenChange, cafe, onSuccess }: EditCafeM
           operationalDays = [...cafeInfo.operational_days];
         } else if (typeof cafeInfo.operational_days === "string") {
           // Try to parse as JSON if it's a string
+          const operationalDaysStr = cafeInfo.operational_days as string;
           try {
-            const parsed = JSON.parse(cafeInfo.operational_days);
+            const parsed = JSON.parse(operationalDaysStr);
             operationalDays = Array.isArray(parsed) ? parsed : [];
           } catch {
             // If not JSON, might be a PostgreSQL array format like "{MON,TUE}"
-            const cleaned = cafeInfo.operational_days.replace(/[{}"]/g, "");
+            const cleaned = operationalDaysStr.replace(/[{}"]/g, "");
             operationalDays = cleaned ? cleaned.split(",").map((d) => d.trim()) : [];
           }
         }
