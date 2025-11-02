@@ -26,12 +26,14 @@ const EditCafeModalContent = ({ open, onOpenChange, cafe, onSuccess }: EditCafeM
       // Fetch cafe data
       const cafeData = (await sql`
         SELECT 
-          cafe_id, name, cafe_photo, cafe_location_link,
-          operational_days, opening_hour, closing_hour,
-          status, created_at, updated_at
-        FROM cafes
-        WHERE cafe_id = ${cafe.cafe_id}
-      `) as Cafe[];
+          c.cafe_id, c.name, c.cafe_photo, c.cafe_location_link,
+          c.location_id, c.operational_days, c.opening_hour, c.closing_hour,
+          c.status, c.created_at, c.updated_at,
+          l.name as location_name
+        FROM cafes c
+        LEFT JOIN locations l ON c.location_id = l.location_id
+        WHERE c.cafe_id = ${cafe.cafe_id}
+      `) as (Cafe & { location_name?: string })[];
 
       if (cafeData.length === 0) {
         toast.error("Cafe not found");
@@ -66,6 +68,7 @@ const EditCafeModalContent = ({ open, onOpenChange, cafe, onSuccess }: EditCafeM
         name: cafeInfo.name || "",
         cafe_photo: cafeInfo.cafe_photo || "",
         cafe_location_link: cafeInfo.cafe_location_link || "",
+        location_id: cafeInfo.location_id || "",
         operational_days: operationalDays,
         opening_hour: cafeInfo.opening_hour || "08:00",
         closing_hour: cafeInfo.closing_hour || "18:00",
@@ -108,6 +111,7 @@ const EditCafeModalContent = ({ open, onOpenChange, cafe, onSuccess }: EditCafeM
           name = ${formData.name},
           cafe_photo = ${formData.cafe_photo},
           cafe_location_link = ${formData.cafe_location_link},
+          location_id = ${formData.location_id || null},
           operational_days = ${formData.operational_days},
           opening_hour = ${formData.opening_hour},
           closing_hour = ${formData.closing_hour},

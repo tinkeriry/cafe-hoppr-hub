@@ -9,7 +9,7 @@ import EmptyStar from "@/components/icons/EmptyStar";
 import FilledYellowStar from "@/components/icons/FilledYellowStar";
 import DefaultFilledStar from "@/components/icons/DefaultFilledStar";
 import { sql } from "@/integrations/neon/client";
-import { Cafe } from "@/integrations/neon/types";
+import { Cafe, Location } from "@/integrations/neon/types";
 import { toast } from "sonner";
 
 interface AddBasicInfoProps {
@@ -35,9 +35,19 @@ const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
   const contributorDropdownRef = useRef<HTMLDivElement>(null);
   const contributorSearchInputRef = useRef<HTMLInputElement>(null);
 
+  // Location dropdown state
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [filteredLocations, setFilteredLocations] = useState<Location[]>([]);
+  const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
+  const [isLocationLoading, setIsLocationLoading] = useState(false);
+  const [locationSearchQuery, setLocationSearchQuery] = useState("");
+  const locationDropdownRef = useRef<HTMLDivElement>(null);
+  const locationSearchInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     fetchCafes();
     fetchContributors();
+    fetchLocations();
   }, []);
 
   // Ensure initial rating displays at least 6 filled stars on first render
@@ -71,6 +81,17 @@ const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
   }, [contributorSearchQuery, contributors]);
 
   useEffect(() => {
+    if (locationSearchQuery.trim()) {
+      const filtered = locations.filter((location) =>
+        location.name.toLowerCase().includes(locationSearchQuery.toLowerCase())
+      );
+      setFilteredLocations(filtered);
+    } else {
+      setFilteredLocations(locations);
+    }
+  }, [locationSearchQuery, locations]);
+
+  useEffect(() => {
     if (isDropdownOpen && searchInputRef.current) {
       searchInputRef.current.focus();
     }
@@ -83,6 +104,12 @@ const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
   }, [isContributorDropdownOpen]);
 
   useEffect(() => {
+    if (isLocationDropdownOpen && locationSearchInputRef.current) {
+      locationSearchInputRef.current.focus();
+    }
+  }, [isLocationDropdownOpen]);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
@@ -93,16 +120,22 @@ const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
       ) {
         setIsContributorDropdownOpen(false);
       }
+      if (
+        locationDropdownRef.current &&
+        !locationDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsLocationDropdownOpen(false);
+      }
     };
 
-    if (isDropdownOpen || isContributorDropdownOpen) {
+    if (isDropdownOpen || isContributorDropdownOpen || isLocationDropdownOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isDropdownOpen, isContributorDropdownOpen]);
+  }, [isDropdownOpen, isContributorDropdownOpen, isLocationDropdownOpen]);
 
   const fetchCafes = async () => {
     setIsLoading(true);
@@ -160,6 +193,24 @@ const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
       toast.error("Error loading contributor list");
     } finally {
       setIsContributorLoading(false);
+    }
+  };
+
+  const fetchLocations = async () => {
+    setIsLocationLoading(true);
+    try {
+      const locationList = (await sql`
+        SELECT location_id, name, created_at, updated_at
+        FROM locations
+        ORDER BY name ASC
+      `) as Location[];
+      setLocations(locationList);
+      setFilteredLocations(locationList);
+    } catch (error) {
+      console.error("Error fetching locations:", error);
+      toast.error("Error loading location list");
+    } finally {
+      setIsLocationLoading(false);
     }
   };
 
@@ -263,7 +314,8 @@ const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
       formData.opening_hour.trim() !== "" &&
       formData.closing_hour.trim() !== "" &&
       isValidHours() &&
-      formData.contributor_name.trim() !== ""
+      formData.contributor_name.trim() !== "" &&
+      formData.location_id.trim() !== ""
     );
   };
 
@@ -495,6 +547,92 @@ const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
                     </Button>
                   </div>
                 )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Cafe Location Area */}
+      <div>
+        <Label htmlFor="location_area">Cafe Location Area *</Label>
+        <div className="relative" ref={locationDropdownRef}>
+          <Input
+            id="location_area"
+            placeholder="Select location area"
+            value={locations.find((loc) => loc.location_id === formData.location_id)?.name || ""}
+            onChange={(e) => {
+              // Don't allow direct typing
+            }}
+            onClick={() => setIsLocationDropdownOpen(!isLocationDropdownOpen)}
+            required
+            className="pr-10 cursor-pointer"
+            readOnly
+          />
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M6 9L12 15L18 9"
+                stroke="#746650"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+
+          {/* Dropdown */}
+          {isLocationDropdownOpen && (
+            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              {/* Search Input */}
+              <div className="p-3 border-b border-gray-100">
+                <Input
+                  ref={locationSearchInputRef}
+                  placeholder="Search location..."
+                  value={locationSearchQuery}
+                  onChange={(e) => setLocationSearchQuery(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Locations List */}
+              <div className="max-h-40 overflow-y-auto">
+                {isLocationLoading ? (
+                  <div className="p-3 text-center text-sm text-gray-500">Loading locations...</div>
+                ) : filteredLocations.length === 0 ? (
+                  <div className="p-3 text-center text-sm text-gray-500">
+                    {locationSearchQuery.trim()
+                      ? "No locations found matching your search"
+                      : "No locations found"}
+                  </div>
+                ) : (
+                  <div className="p-2">
+                    {filteredLocations.map((location) => (
+                      <div
+                        key={location.location_id}
+                        onClick={() => {
+                          updateFormData({ location_id: location.location_id });
+                          setIsLocationDropdownOpen(false);
+                          setLocationSearchQuery("");
+                        }}
+                        className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer rounded transition-colors ${
+                          formData.location_id === location.location_id
+                            ? "bg-gray-100 text-[#746650] font-medium"
+                            : "text-[#746650]"
+                        }`}
+                      >
+                        {formData.location_id === location.location_id ? "✓ " : ""}
+                        {location.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

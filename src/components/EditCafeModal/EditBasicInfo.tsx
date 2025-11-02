@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useCafeForm } from "@/contexts/CafeFormContext";
 import Clock from "@/components/icons/Clock";
 import { sql } from "@/integrations/neon/client";
-import { Cafe } from "@/integrations/neon/types";
+import { Cafe, Location } from "@/integrations/neon/types";
 import { toast } from "sonner";
 
 interface EditBasicInfoProps {
@@ -24,8 +24,18 @@ const EditBasicInfo: React.FC<EditBasicInfoProps> = ({ onSubmit, loading, cafeId
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Location dropdown state
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [filteredLocations, setFilteredLocations] = useState<Location[]>([]);
+  const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
+  const [isLocationLoading, setIsLocationLoading] = useState(false);
+  const [locationSearchQuery, setLocationSearchQuery] = useState("");
+  const locationDropdownRef = useRef<HTMLDivElement>(null);
+  const locationSearchInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     fetchCafes();
+    fetchLocations();
   }, []);
 
   useEffect(() => {
@@ -46,20 +56,43 @@ const EditBasicInfo: React.FC<EditBasicInfoProps> = ({ onSubmit, loading, cafeId
   }, [isDropdownOpen]);
 
   useEffect(() => {
+    if (isLocationDropdownOpen && locationSearchInputRef.current) {
+      locationSearchInputRef.current.focus();
+    }
+  }, [isLocationDropdownOpen]);
+
+  useEffect(() => {
+    if (locationSearchQuery.trim()) {
+      const filtered = locations.filter((location) =>
+        location.name.toLowerCase().includes(locationSearchQuery.toLowerCase())
+      );
+      setFilteredLocations(filtered);
+    } else {
+      setFilteredLocations(locations);
+    }
+  }, [locationSearchQuery, locations]);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
+      if (
+        locationDropdownRef.current &&
+        !locationDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsLocationDropdownOpen(false);
+      }
     };
 
-    if (isDropdownOpen) {
+    if (isDropdownOpen || isLocationDropdownOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isDropdownOpen]);
+  }, [isDropdownOpen, isLocationDropdownOpen]);
 
   const fetchCafes = async () => {
     setIsLoading(true);
@@ -98,6 +131,24 @@ const EditBasicInfo: React.FC<EditBasicInfoProps> = ({ onSubmit, loading, cafeId
       toast.error("Error loading cafe list");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchLocations = async () => {
+    setIsLocationLoading(true);
+    try {
+      const locationList = (await sql`
+        SELECT location_id, name, created_at, updated_at
+        FROM locations
+        ORDER BY name ASC
+      `) as Location[];
+      setLocations(locationList);
+      setFilteredLocations(locationList);
+    } catch (error) {
+      console.error("Error fetching locations:", error);
+      toast.error("Error loading location list");
+    } finally {
+      setIsLocationLoading(false);
     }
   };
 
@@ -164,7 +215,8 @@ const EditBasicInfo: React.FC<EditBasicInfoProps> = ({ onSubmit, loading, cafeId
       formData.operational_days.length > 0 &&
       formData.opening_hour.trim() !== "" &&
       formData.closing_hour.trim() !== "" &&
-      isValidHours()
+      isValidHours() &&
+      formData.location_id.trim() !== ""
     );
   };
 
@@ -290,6 +342,92 @@ const EditBasicInfo: React.FC<EditBasicInfoProps> = ({ onSubmit, loading, cafeId
             Please enter a valid image URL (e.g., .jpg, .png, .gif, .webp, .svg or Unsplash link)
           </p>
         )}
+      </div>
+
+      {/* Cafe Location Area */}
+      <div>
+        <Label htmlFor="location_area">Cafe Location Area *</Label>
+        <div className="relative" ref={locationDropdownRef}>
+          <Input
+            id="location_area"
+            placeholder="Select location area"
+            value={locations.find((loc) => loc.location_id === formData.location_id)?.name || ""}
+            onChange={(e) => {
+              // Don't allow direct typing
+            }}
+            onClick={() => setIsLocationDropdownOpen(!isLocationDropdownOpen)}
+            required
+            className="pr-10 cursor-pointer"
+            readOnly
+          />
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M6 9L12 15L18 9"
+                stroke="#746650"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+
+          {/* Dropdown */}
+          {isLocationDropdownOpen && (
+            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              {/* Search Input */}
+              <div className="p-3 border-b border-gray-100">
+                <Input
+                  ref={locationSearchInputRef}
+                  placeholder="Search location..."
+                  value={locationSearchQuery}
+                  onChange={(e) => setLocationSearchQuery(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Locations List */}
+              <div className="max-h-40 overflow-y-auto">
+                {isLocationLoading ? (
+                  <div className="p-3 text-center text-sm text-gray-500">Loading locations...</div>
+                ) : filteredLocations.length === 0 ? (
+                  <div className="p-3 text-center text-sm text-gray-500">
+                    {locationSearchQuery.trim()
+                      ? "No locations found matching your search"
+                      : "No locations found"}
+                  </div>
+                ) : (
+                  <div className="p-2">
+                    {filteredLocations.map((location) => (
+                      <div
+                        key={location.location_id}
+                        onClick={() => {
+                          updateFormData({ location_id: location.location_id });
+                          setIsLocationDropdownOpen(false);
+                          setLocationSearchQuery("");
+                        }}
+                        className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer rounded transition-colors ${
+                          formData.location_id === location.location_id
+                            ? "bg-gray-100 text-[#746650] font-medium"
+                            : "text-[#746650]"
+                        }`}
+                      >
+                        {formData.location_id === location.location_id ? "✓ " : ""}
+                        {location.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Cafe Location Link */}

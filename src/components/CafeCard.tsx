@@ -17,6 +17,7 @@ import Pray from "@/components/icons/Pray";
 import Smile from "@/components/icons/Smile";
 import Park from "@/components/icons/Park";
 import ThreeDots from "@/components/icons/ThreeDots";
+import { MapPin } from "lucide-react";
 
 interface CafeCardProps {
   cafe: {
@@ -24,6 +25,8 @@ interface CafeCardProps {
     name: string;
     cafe_photo: string;
     cafe_location_link: string;
+    location_id?: string;
+    location_name?: string;
     reviews?: {
       review_id: string;
       cafe_id: string;
@@ -274,21 +277,79 @@ const CafeCard = ({ cafe, onEdit, onDelete, onAddReview }: CafeCardProps) => {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {imageError || !cafe.cafe_photo ? (
-        <div className="w-full h-[240px] bg-gradient-to-br from-[#e5d8c2] to-[#d4c4a8] flex items-center justify-center rounded-t-3xl">
-          <div className="text-center">
-            <div className="text-6xl mb-2">☕</div>
-            <p className="text-[#746650] font-medium text-sm">No Image</p>
+      <div className="relative">
+        {imageError || !cafe.cafe_photo ? (
+          <div className="w-full h-[240px] bg-gradient-to-br from-[#e5d8c2] to-[#d4c4a8] flex items-center justify-center rounded-t-3xl">
+            <div className="text-center">
+              <div className="text-6xl mb-2">☕</div>
+              <p className="text-[#746650] font-medium text-sm">No Image</p>
+            </div>
           </div>
-        </div>
-      ) : (
-        <img
-          src={cafe.cafe_photo}
-          alt={cafe.name}
-          className="w-full h-[240px] object-cover"
-          onError={handleImageError}
-        />
-      )}
+        ) : (
+          <img
+            src={cafe.cafe_photo}
+            alt={cafe.name}
+            className="w-full h-[240px] object-cover rounded-t-3xl"
+            onError={handleImageError}
+          />
+        )}
+        {/* Action Button - Top Right */}
+        <button
+          ref={actionButtonRef}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowActionMenu(!showActionMenu);
+          }}
+          className="absolute top-3 right-3 p-2 rounded-full bg-white/90 hover:bg-white transition-colors shadow-sm z-10"
+          aria-label="Actions"
+        >
+          <ThreeDots />
+        </button>
+        {showActionMenu &&
+          menuPosition &&
+          createPortal(
+            <div
+              ref={actionMenuRef}
+              className="fixed z-50 animate-in slide-in-from-top-2 duration-200"
+              style={{
+                top: `${menuPosition.top}px`,
+                left: `${menuPosition.left}px`,
+              }}
+            >
+              <div
+                className="flex flex-col justify-start items-start relative rounded-2xl bg-white"
+                style={{ boxShadow: "0px 8px 16px 0 rgba(88,60,49,0.2)" }}
+              >
+                <div
+                  className="w-52 text-base font-medium text-left text-[#604926] cursor-pointer hover:text-[#746650] hover:bg-gray-50 px-3 py-2.5 rounded-lg transition-all duration-200 ease-in-out"
+                  onClick={handleAddReview}
+                >
+                  Add a Review
+                </div>
+                <div
+                  className="w-52 text-base font-medium text-left text-[#604926] cursor-pointer hover:text-[#746650] hover:bg-gray-50 px-3 py-2.5 rounded-lg transition-all duration-200 ease-in-out"
+                  onClick={handleEditCafe}
+                >
+                  Edit Cafe
+                </div>
+                <div
+                  className="w-52 text-base font-medium text-left text-red-600 cursor-pointer hover:text-red-700 hover:bg-red-50 px-3 py-2.5 rounded-lg transition-all duration-200 ease-in-out"
+                  onClick={handleDeleteCafe}
+                >
+                  Delete Cafe
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
+        {/* Location Badge - Bottom Left */}
+        {cafe.location_name && (
+          <div className="absolute bottom-3 left-3 flex items-center gap-1 px-3 py-1.5 bg-white rounded-full shadow-sm">
+            <MapPin className="w-4 h-4 text-[#604926]" />
+            <span className="text-sm font-semibold text-[#604926]">{cafe.location_name}</span>
+          </div>
+        )}
+      </div>
 
       <div className="p-4">
         <h3 className="text-xl font-semibold mb-2">{cafe.name}</h3>
@@ -332,55 +393,7 @@ const CafeCard = ({ cafe, onEdit, onDelete, onAddReview }: CafeCardProps) => {
           ))}
         </div>
 
-        <div className="flex justify-between items-center gap-2 relative overflow-clip">
-          <button
-            ref={actionButtonRef}
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowActionMenu(!showActionMenu);
-            }}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors relative"
-            aria-label="Actions"
-          >
-            <ThreeDots />
-          </button>
-          {showActionMenu &&
-            menuPosition &&
-            createPortal(
-              <div
-                ref={actionMenuRef}
-                className="fixed z-50 animate-in slide-in-from-top-2 duration-200"
-                style={{
-                  top: `${menuPosition.top}px`,
-                  left: `${menuPosition.left}px`,
-                }}
-              >
-                <div
-                  className="flex flex-col justify-start items-start relative rounded-2xl bg-white"
-                  style={{ boxShadow: "0px 8px 16px 0 rgba(88,60,49,0.2)" }}
-                >
-                  <div
-                    className="w-52 text-base font-medium text-left text-[#604926] cursor-pointer hover:text-[#746650] hover:bg-gray-50 px-3 py-2.5 rounded-lg transition-all duration-200 ease-in-out"
-                    onClick={handleAddReview}
-                  >
-                    Add a Review
-                  </div>
-                  <div
-                    className="w-52 text-base font-medium text-left text-[#604926] cursor-pointer hover:text-[#746650] hover:bg-gray-50 px-3 py-2.5 rounded-lg transition-all duration-200 ease-in-out"
-                    onClick={handleEditCafe}
-                  >
-                    Edit Cafe
-                  </div>
-                  <div
-                    className="w-52 text-base font-medium text-left text-red-600 cursor-pointer hover:text-red-700 hover:bg-red-50 px-3 py-2.5 rounded-lg transition-all duration-200 ease-in-out"
-                    onClick={handleDeleteCafe}
-                  >
-                    Delete Cafe
-                  </div>
-                </div>
-              </div>,
-              document.body
-            )}
+        <div className="flex justify-end items-center gap-2">
           <Button
             variant="cafe"
             onClick={() => navigate(`/cafe/${cafe.cafe_id}`)}

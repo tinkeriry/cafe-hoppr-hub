@@ -5,6 +5,7 @@ interface CafeFormData {
   name: string;
   cafe_photo: string;
   cafe_location_link: string;
+  location_id: string;
   review: string;
   star_rating: number;
   operational_days: string[];
@@ -37,6 +38,7 @@ const initialFormData: CafeFormData = {
   name: "",
   cafe_photo: "",
   cafe_location_link: "",
+  location_id: "",
   review: "",
   star_rating: 6,
   operational_days: [],

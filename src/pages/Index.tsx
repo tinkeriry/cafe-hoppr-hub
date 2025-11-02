@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { sql } from "@/integrations/neon/client";
-import { Cafe } from "@/integrations/neon/types";
+import { Cafe, Location } from "@/integrations/neon/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import CafeCard from "@/components/CafeCard";
@@ -25,6 +25,9 @@ const Index = () => {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
   const [activeSort, setActiveSort] = useState<string>("");
+  const [showLocationFilter, setShowLocationFilter] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [locations, setLocations] = useState<Location[]>([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,25 +38,46 @@ const Index = () => {
 
   useEffect(() => {
     fetchCafes();
+    fetchLocations();
   }, []);
 
+  const fetchLocations = async () => {
+    try {
+      const locationList = (await sql`
+        SELECT location_id, name, created_at, updated_at
+        FROM locations
+        ORDER BY name ASC
+      `) as Location[];
+      setLocations(locationList);
+    } catch (error) {
+      console.error("Error fetching locations:", error);
+    }
+  };
+
   useEffect(() => {
+    let filtered = cafes;
+
+    // Filter by search query
     if (searchQuery) {
-      const filtered = cafes.filter(
+      filtered = filtered.filter(
         (cafe) =>
           cafe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           cafe.reviews?.some((review) =>
             review.review.toLowerCase().includes(searchQuery.toLowerCase())
           )
       );
-      setFilteredCafes(filtered);
-    } else {
-      setFilteredCafes(cafes);
     }
 
-    // Reset pagination when search changes
+    // Filter by location
+    if (selectedLocation) {
+      filtered = filtered.filter((cafe) => cafe.location_id === selectedLocation);
+    }
+
+    setFilteredCafes(filtered);
+
+    // Reset pagination when search or filter changes
     setCurrentPage(1);
-  }, [searchQuery, cafes]);
+  }, [searchQuery, selectedLocation, cafes]);
 
   useEffect(() => {
     const startIndex = 0;
@@ -61,6 +85,24 @@ const Index = () => {
     const cafesToShow = filteredCafes.slice(startIndex, endIndex);
     setDisplayedCafes(cafesToShow);
   }, [filteredCafes, currentPage]);
+
+  // Handle click outside for location filter
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const locationFilter = document.querySelector("[data-location-filter]");
+      if (locationFilter && !locationFilter.contains(event.target as Node) && showLocationFilter) {
+        setShowLocationFilter(false);
+      }
+    };
+
+    if (showLocationFilter) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showLocationFilter]);
 
   const handleLoadMore = () => {
     setIsLoadingMore(true);
@@ -81,6 +123,8 @@ const Index = () => {
           c.name,
           c.cafe_photo,
           c.cafe_location_link,
+          c.location_id,
+          l.name as location_name,
           c.operational_days,
           c.opening_hour,
           c.closing_hour,
@@ -113,9 +157,10 @@ const Index = () => {
           ) as reviews
         FROM cafes c
         LEFT JOIN reviews r ON r.cafe_id = c.cafe_id
+        LEFT JOIN locations l ON c.location_id = l.location_id
         WHERE c.status = 'approved' 
         GROUP BY c.cafe_id, c.name, c.cafe_photo, c.cafe_location_link, 
-                 c.operational_days, c.opening_hour, c.closing_hour,
+                 c.location_id, l.name, c.operational_days, c.opening_hour, c.closing_hour,
                  c.status, c.created_at, c.updated_at
         ORDER BY c.created_at DESC
       `) as Array<{
@@ -123,6 +168,8 @@ const Index = () => {
         name: string;
         cafe_photo: string;
         cafe_location_link: string;
+        location_id: string | null;
+        location_name: string | null;
         operational_days?: string[];
         opening_hour?: string;
         closing_hour?: string;
@@ -300,21 +347,91 @@ const Index = () => {
                   </div>
                 )}
               </div>
-              <div
-                className="flex items-center cursor-pointer relative gap-2 p-3 rounded-full border-2 border-[#746650]"
-                data-sort-icon
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowSortModal(!showSortModal);
-                }}
-              >
-                <SortIcon className="w-6 h-6 text-[#746650]" />
-                <SortModal
-                  isOpen={showSortModal}
-                  onClose={() => setShowSortModal(false)}
-                  onSort={handleSort}
-                  activeSort={activeSort}
-                />
+              <div className="flex items-center gap-2">
+                <div
+                  className="flex items-center cursor-pointer relative gap-2 p-3 rounded-full border-2 border-[#746650]"
+                  data-location-filter
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowLocationFilter(!showLocationFilter);
+                  }}
+                >
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="text-[#746650]"
+                  >
+                    <path
+                      d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  {showLocationFilter && (
+                    <div className="absolute top-full right-0 mt-2 z-50 animate-in slide-in-from-top-2 duration-200">
+                      <div
+                        className="flex flex-col justify-start items-end relative rounded-2xl bg-white min-w-[200px]"
+                        style={{ boxShadow: "0px 8px 16px 0 rgba(88,60,49,0.2)" }}
+                      >
+                        <div
+                          className="w-full text-base font-medium text-left text-[#604926] cursor-pointer hover:text-[#746650] hover:bg-gray-50 px-3 py-2 rounded-lg transition-all duration-200 ease-in-out flex items-center justify-between"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedLocation("");
+                            setShowLocationFilter(false);
+                          }}
+                        >
+                          <span>All Locations</span>
+                          {!selectedLocation && <span className="text-green-600 text-base">✓</span>}
+                        </div>
+                        {locations.map((location) => (
+                          <div
+                            key={location.location_id}
+                            className="w-full text-base font-medium text-left text-[#604926] cursor-pointer hover:text-[#746650] hover:bg-gray-50 px-3 py-2 rounded-lg transition-all duration-200 ease-in-out flex items-center justify-between"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedLocation(location.location_id);
+                              setShowLocationFilter(false);
+                            }}
+                          >
+                            <span>{location.name}</span>
+                            {selectedLocation === location.location_id && (
+                              <span className="text-green-600 text-base">✓</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div
+                  className="flex items-center cursor-pointer relative gap-2 p-3 rounded-full border-2 border-[#746650]"
+                  data-sort-icon
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowSortModal(!showSortModal);
+                  }}
+                >
+                  <SortIcon className="w-6 h-6 text-[#746650]" />
+                  <SortModal
+                    isOpen={showSortModal}
+                    onClose={() => setShowSortModal(false)}
+                    onSort={handleSort}
+                    activeSort={activeSort}
+                  />
+                </div>
               </div>
             </div>
           </div>

@@ -1,3 +1,10 @@
+export interface Location {
+  location_id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Review {
   review_id: string;
   cafe_id: string;
@@ -23,6 +30,8 @@ export interface Cafe {
   name: string;
   cafe_photo: string;
   cafe_location_link: string;
+  location_id?: string;
+  location_name?: string;
   operational_days?: string[];
   opening_hour?: string; // HH:MM
   closing_hour?: string; // HH:MM
@@ -38,6 +47,7 @@ export interface CafeFormData {
   name: string;
   cafe_photo: string;
   cafe_location_link: string;
+  location_id: string;
   review: string;
   star_rating: number;
   operational_days: string[];

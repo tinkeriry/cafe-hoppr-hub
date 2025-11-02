@@ -26,12 +26,12 @@ const AddCafeModalContent = ({ open, onOpenChange, onSuccess }: AddCafeModalProp
       // Insert cafe
       await sql`
         INSERT INTO cafes (
-          cafe_id, name, cafe_photo, cafe_location_link,
+          cafe_id, name, cafe_photo, cafe_location_link, location_id,
           operational_days, opening_hour, closing_hour,
           status, created_at, updated_at
         ) VALUES (
           ${cafeId}, ${formData.name}, ${formData.cafe_photo}, 
-          ${formData.cafe_location_link},
+          ${formData.cafe_location_link}, ${formData.location_id || null},
           ${formData.operational_days}, ${formData.opening_hour}, ${formData.closing_hour},
           'approved', ${now}, ${now}
         )
