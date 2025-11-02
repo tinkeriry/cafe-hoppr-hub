@@ -354,20 +354,20 @@ const CafeCard = ({ cafe, onEdit, onDelete, onAddReview }: CafeCardProps) => {
             <span className="text-sm font-semibold text-[#604926]">{cafe.location_name}</span>
           </div>
         )}
-      </div>
 
-      <div className="p-4">
-        <h3 className="text-xl font-semibold mb-2">{cafe.name}</h3>
-
-        {/* Operational Hours */}
+        {/* Operational Hours Badge - Bottom Right */}
         {cafe.opening_hour && cafe.closing_hour && (
-          <div className="flex items-center gap-1 mb-2">
+          <div className="absolute bottom-3 right-3 flex items-center gap-1 px-3 py-1.5 bg-white rounded-full shadow-sm">
             <Clock className="w-4 h-4 text-[#746650]" />
-            <span className="text-sm text-[#746650]">
+            <span className="text-sm font-semibold text-[#746650]">
               {cafe.opening_hour.substring(0, 5)} - {cafe.closing_hour.substring(0, 5)}
             </span>
           </div>
         )}
+      </div>
+
+      <div className="p-4">
+        <h3 className="text-xl font-semibold mb-2">{cafe.name}</h3>
 
         {/* Rating display with custom stars */}
         {latestReview && (
