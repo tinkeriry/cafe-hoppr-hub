@@ -22,6 +22,10 @@ jobs:
       - run: pnpm lint
       - name: Create .env file from secrets
         run: |
+          if [ -z "${{ secrets.VITE_DATABASE_URL }}" ]; then
+            echo "ERROR: VITE_DATABASE_URL secret is not set in GitHub"
+            exit 1
+          fi
           echo "VITE_DATABASE_URL=${{ secrets.VITE_DATABASE_URL }}" > .env
           echo "Created .env file (first 50 chars): $(head -c 50 .env)..."
       - name: Verify .env file
@@ -29,7 +33,14 @@ jobs:
           if [ -f .env ]; then
             echo ".env file exists"
             if grep -q "VITE_DATABASE_URL" .env; then
-              echo "VITE_DATABASE_URL is present in .env"
+              # Check if the value is not empty (after the = sign)
+              if grep -q "VITE_DATABASE_URL=.*[^=]$" .env || grep -q "VITE_DATABASE_URL=postgresql" .env; then
+                echo "✓ VITE_DATABASE_URL is present in .env with a value"
+                echo "Value length: $(grep VITE_DATABASE_URL .env | cut -d'=' -f2 | wc -c) characters"
+              else
+                echo "ERROR: VITE_DATABASE_URL is present but has no value"
+                exit 1
+              fi
             else
               echo "ERROR: VITE_DATABASE_URL not found in .env"
               exit 1
@@ -39,7 +50,22 @@ jobs:
             exit 1
           fi
       - name: Build application
-        run: pnpm run deploy
+        run: |
+          echo "Building with .env file..."
+          cat .env
+          pnpm run deploy
+          echo "Checking if VITE_DATABASE_URL is in built files..."
+          if grep -r "VITE_DATABASE_URL" dist/ 2>/dev/null | head -1; then
+            echo "✓ VITE_DATABASE_URL found in dist files"
+          else
+            echo "⚠ WARNING: VITE_DATABASE_URL not found in dist files - checking for database URL pattern..."
+            if grep -r "postgresql://" dist/ 2>/dev/null | head -1; then
+              echo "✓ Database URL pattern found in dist files"
+            else
+              echo "ERROR: Database URL not embedded in build"
+              exit 1
+            fi
+          fi
       - name: Cleanup .env file
         if: always()
         run: rm -f .env
