@@ -13,6 +13,7 @@ import Footer from "@/components/Footer";
 import SortIcon from "@/components/icons/SortIcon";
 import SortModal from "@/components/SortModal";
 import { toast } from "sonner";
+import { ArrowUp } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -34,6 +35,7 @@ const Index = () => {
   const [displayedCafes, setDisplayedCafes] = useState<Cafe[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
   const cafesPerPage = 9;
 
   useEffect(() => {
@@ -103,6 +105,29 @@ const Index = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showLocationFilter]);
+
+  // Handle scroll to show/hide "Go to Top" button
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY || window.pageYOffset;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+
+      // Show button when scrolled past the middle of the page
+      const shouldShow = scrollPosition > windowHeight / 2;
+      setShowScrollToTop(shouldShow);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
 
   const handleLoadMore = () => {
     setIsLoadingMore(true);
@@ -509,6 +534,17 @@ const Index = () => {
 
       {/* Footer */}
       <Footer />
+
+      {/* Go to Top Button */}
+      {showScrollToTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 z-50 bg-[#746650] hover:bg-[#604926] text-white rounded-full p-4 shadow-lg transition-all duration-300 ease-in-out hover:scale-110 animate-in fade-in slide-in-from-bottom-4"
+          aria-label="Go to top"
+        >
+          <ArrowUp className="w-6 h-6" />
+        </button>
+      )}
 
       {/* Modals */}
       <AddCafeModal open={showAddModal} onOpenChange={setShowAddModal} onSuccess={fetchCafes} />
