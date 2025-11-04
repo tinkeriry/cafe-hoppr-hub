@@ -18,8 +18,9 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-      - run: pnpm ci
-      - run: pnpm deploy
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm run deploy
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
