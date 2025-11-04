@@ -105,3 +105,6 @@ public
 # Temporary folders
 tmp/
 temp/
+
+# Firebase cache
+.firebase/
