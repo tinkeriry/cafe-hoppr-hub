@@ -22,19 +22,14 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
-      - name: Verify environment variables
+      - name: Create .env file from secrets
         run: |
-          if [ -z "${{ secrets.VITE_DATABASE_URL }}" ]; then
-            echo "❌ ERROR: VITE_DATABASE_URL secret is not set!"
-            echo "Please add VITE_DATABASE_URL to GitHub Secrets"
-            exit 1
-          else
-            echo "✅ VITE_DATABASE_URL is set"
-          fi
+          echo "VITE_DATABASE_URL=${{ secrets.VITE_DATABASE_URL }}" > .env
       - name: Build application
-        env:
-          VITE_DATABASE_URL: ${{ secrets.VITE_DATABASE_URL }}
         run: pnpm run deploy
+      - name: Cleanup .env file
+        if: always()
+        run: rm -f .env
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
