@@ -322,7 +322,7 @@ const Index = () => {
             </div>
 
             <h1 className="font-pixel text-5xl md:text-6xl mb-4 text-foreground relative z-10">
-              Cafe Hopprs
+              Cafe Hoppr
             </h1>
             <p className="text-muted-foreground mb-8 text-lg max-w-lg mx-auto">
               See our catalogue to find your WFC spot or simply "nyari angin" around Bandung
