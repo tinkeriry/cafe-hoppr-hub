@@ -20,6 +20,15 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      - name: Verify environment variables
+        run: |
+          if [ -z "${{ secrets.VITE_DATABASE_URL }}" ]; then
+            echo "❌ ERROR: VITE_DATABASE_URL secret is not set!"
+            echo "Please add VITE_DATABASE_URL to GitHub Secrets"
+            exit 1
+          else
+            echo "✅ VITE_DATABASE_URL is set"
+          fi
       - name: Build application
         env:
           VITE_DATABASE_URL: ${{ secrets.VITE_DATABASE_URL }}
