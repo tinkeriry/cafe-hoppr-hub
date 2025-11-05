@@ -17,8 +17,7 @@ import Pray from "@/components/icons/Pray";
 import Smile from "@/components/icons/Smile";
 import Park from "@/components/icons/Park";
 import ThreeDots from "@/components/icons/ThreeDots";
-import Clock from "@/components/icons/Clock";
-import { MapPin } from "lucide-react";
+import { MapPin, CircleDot, XCircle } from "lucide-react";
 import { Review } from "@/integrations/neon/types";
 
 interface CafeCardProps {
@@ -51,69 +50,56 @@ const CafeCard = ({ cafe, onEdit, onDelete, onAddReview }: CafeCardProps) => {
   const [menuPosition, setMenuPosition] = useState<{ top: number; right: number } | null>(null);
   const actionMenuRef = useRef<HTMLDivElement>(null);
   const actionButtonRef = useRef<HTMLButtonElement>(null);
-  const badgesContainerRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
 
   const handleImageError = () => {
     setImageError(true);
   };
 
-  // Handle drag/swipe for badges container
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging || !badgesContainerRef.current) return;
-      e.preventDefault();
-      const rect = badgesContainerRef.current.getBoundingClientRect();
-      const x = e.pageX - rect.left;
-      const walk = (x - startX) * 2; // Scroll speed multiplier
-      badgesContainerRef.current.scrollLeft = scrollLeft - walk;
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-    };
-
-    if (isDragging) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
+  // Check if cafe is currently open
+  const isCafeOpen = () => {
+    if (!cafe.opening_hour || !cafe.closing_hour || !cafe.operational_days) {
+      return null; // Unknown status
     }
 
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [isDragging, startX, scrollLeft]);
+    // Parse operational_days - handle different formats from database
+    let operationalDays: string[] = [];
+    if (Array.isArray(cafe.operational_days)) {
+      operationalDays = [...cafe.operational_days];
+    } else if (typeof cafe.operational_days === "string") {
+      const operationalDaysStr: string = cafe.operational_days;
+      try {
+        const parsed = JSON.parse(operationalDaysStr);
+        operationalDays = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        // PostgreSQL array format like "{MON,TUE}"
+        const cleaned = operationalDaysStr.replace(/[{}"]/g, "");
+        operationalDays = cleaned ? cleaned.split(",").map((d) => d.trim()) : [];
+      }
+    }
 
-  const handleBadgesMouseDown = (e: React.MouseEvent) => {
-    if (!badgesContainerRef.current) return;
-    setIsDragging(true);
-    const rect = badgesContainerRef.current.getBoundingClientRect();
-    setStartX(e.pageX - rect.left);
-    setScrollLeft(badgesContainerRef.current.scrollLeft);
-    e.preventDefault();
-  };
+    if (operationalDays.length === 0) {
+      return null; // Unknown status
+    }
 
-  const handleBadgesTouchStart = (e: React.TouchEvent) => {
-    if (!badgesContainerRef.current) return;
-    setIsDragging(true);
-    const rect = badgesContainerRef.current.getBoundingClientRect();
-    setStartX(e.touches[0].pageX - rect.left);
-    setScrollLeft(badgesContainerRef.current.scrollLeft);
-  };
+    const now = new Date();
+    // Get day abbreviation (MON, TUE, etc.)
+    const dayNames = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+    const currentDay = dayNames[now.getDay()];
+    const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
 
-  const handleBadgesTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || !badgesContainerRef.current) return;
-    e.preventDefault();
-    const rect = badgesContainerRef.current.getBoundingClientRect();
-    const x = e.touches[0].pageX - rect.left;
-    const walk = (x - startX) * 2; // Scroll speed multiplier
-    badgesContainerRef.current.scrollLeft = scrollLeft - walk;
-  };
+    // Check if today is an operational day (case-insensitive comparison)
+    const isOperationalDay = operationalDays.some((day) => day.toUpperCase().trim() === currentDay);
 
-  const handleBadgesTouchEnd = () => {
-    setIsDragging(false);
+    if (!isOperationalDay) {
+      return false; // Closed - not an operational day
+    }
+
+    // Compare time strings (HH:MM format)
+    const openingTime = cafe.opening_hour.substring(0, 5);
+    const closingTime = cafe.closing_hour.substring(0, 5);
+
+    // Check if current time is between opening and closing
+    return currentTime >= openingTime && currentTime <= closingTime;
   };
 
   // Handle click outside for action menu and calculate position
@@ -347,21 +333,32 @@ const CafeCard = ({ cafe, onEdit, onDelete, onAddReview }: CafeCardProps) => {
             </div>,
             document.body
           )}
-        {/* Location Badge - Bottom Left */}
-        {cafe.location_name && (
-          <div className="absolute bottom-3 left-3 flex items-center gap-1 px-3 py-1.5 bg-white rounded-full shadow-sm">
-            <MapPin className="w-4 h-4 text-[#604926]" />
-            <span className="text-sm font-semibold text-[#604926]">{cafe.location_name}</span>
+        {/* Status Badge - Bottom Left */}
+        {cafe.opening_hour && cafe.closing_hour && isCafeOpen() !== null && (
+          <div
+            className={`absolute bottom-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full shadow-sm z-10 ${
+              isCafeOpen() ? "bg-white/95 text-[#604926]" : "bg-white/95 text-red-600"
+            }`}
+          >
+            {isCafeOpen() ? (
+              <>
+                <CircleDot className="w-4 h-4" />
+                <span className="text-sm font-semibold">OPEN NOW</span>
+              </>
+            ) : (
+              <>
+                <XCircle className="w-4 h-4" />
+                <span className="text-sm font-semibold">CLOSED</span>
+              </>
+            )}
           </div>
         )}
 
-        {/* Operational Hours Badge - Bottom Right */}
-        {cafe.opening_hour && cafe.closing_hour && (
+        {/* Location Badge - Bottom Right */}
+        {cafe.location_name && (
           <div className="absolute bottom-3 right-3 flex items-center gap-1 px-3 py-1.5 bg-white rounded-full shadow-sm">
-            <Clock className="w-4 h-4 text-[#746650]" />
-            <span className="text-sm font-semibold text-[#746650]">
-              {cafe.opening_hour.substring(0, 5)} - {cafe.closing_hour.substring(0, 5)}
-            </span>
+            <MapPin className="w-4 h-4 text-[#604926]" />
+            <span className="text-sm font-semibold text-[#604926]">{cafe.location_name}</span>
           </div>
         )}
       </div>
@@ -389,18 +386,11 @@ const CafeCard = ({ cafe, onEdit, onDelete, onAddReview }: CafeCardProps) => {
         )}
 
         {/* Review Metrics - Average from all reviews */}
-        <div
-          ref={badgesContainerRef}
-          className="flex gap-1.5 mb-4 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4 cursor-grab active:cursor-grabbing select-none"
-          onMouseDown={handleBadgesMouseDown}
-          onTouchStart={handleBadgesTouchStart}
-          onTouchMove={handleBadgesTouchMove}
-          onTouchEnd={handleBadgesTouchEnd}
-        >
+        <div className="flex flex-wrap gap-2 mb-4 -mx-4 px-4 w-full">
           {badges.map((badge, index) => (
             <div
               key={index}
-              className="flex justify-center items-center relative gap-1 px-3 py-1 rounded-3xl bg-[#c5dbc2]/[0.24] border border-[#668d61] flex-shrink-0 pointer-events-none"
+              className="flex justify-center items-center relative gap-1 px-3 py-1 rounded-3xl bg-[#c5dbc2]/[0.24] border border-[#668d61]"
             >
               <badge.icon className="w-5 h-5 relative text-[#668d61]" />
               <p className="text-xs font-medium text-left text-[#668d61]">{badge.value}</p>
