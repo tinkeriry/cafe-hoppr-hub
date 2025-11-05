@@ -317,7 +317,7 @@ const Index = () => {
       <div className="flex-1">
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Header */}
-          <div className="text-center mb-12 relative mt-16">
+          <div className="text-center mb-12 relative mt-20">
             {/* Floating Emojis */}
             <div className="absolute inset-4 pointer-events-none hidden xl:block">
               <span
