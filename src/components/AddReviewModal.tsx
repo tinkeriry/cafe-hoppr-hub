@@ -4,9 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { sql } from "@/integrations/neon/client";
 import { toast } from "sonner";
-import { Cafe } from "@/integrations/neon/types";
+import { Cafe } from "@/integrations/server/types";
 import Price from "@/components/icons/Price";
 import Food from "@/components/icons/Food";
 import Seat from "@/components/icons/Seat";
@@ -124,12 +123,7 @@ const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalP
   const fetchContributors = async () => {
     setIsContributorLoading(true);
     try {
-      const contributorList = (await sql`
-        SELECT DISTINCT created_by FROM reviews 
-        WHERE created_by IS NOT NULL AND created_by != ''
-        ORDER BY created_by ASC
-      `) as { created_by: string }[];
-      const contributorNames = contributorList.map((c) => c.created_by);
+      const contributorNames = await listContributors();
       setContributors(contributorNames);
       setFilteredContributors(contributorNames);
     } catch (error) {
@@ -286,22 +280,24 @@ const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalP
 
       const now = new Date().toISOString();
 
-      // Insert review
-      await sql`
-        INSERT INTO reviews (
-          cafe_id, review,
-          price, wifi, seat_comfort, electricity_socket, food_beverage,
-          praying_room, hospitality, toilet, noise, parking,
-          created_by, created_at, updated_at
-        ) VALUES (
-          ${cafeId}, ${review},
-          ${price}, ${wifi}, ${seatComfort}, 
-          ${electricitySocket}, ${foodBeverage},
-          ${prayingRoom}, ${hospitality}, ${toilet}, 
-          ${noise}, ${parking},
-          ${contributorName}, ${now}, ${now}
-        )
-      `;
+      // Create review via API
+      await createReview({
+        cafe_id: cafeId,
+        review,
+        price,
+        wifi,
+        seat_comfort: seatComfort,
+        electricity_socket: electricitySocket,
+        food_beverage: foodBeverage,
+        praying_room: prayingRoom,
+        hospitality,
+        toilet,
+        noise,
+        parking,
+        created_by: contributorName,
+        created_at: now,
+        updated_at: now,
+      });
 
       toast.success("Review added successfully!");
       onSuccess();
@@ -599,3 +595,4 @@ const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalP
 };
 
 export default AddReviewModal;
+import { listContributors, createReview } from "@/integrations/server/reviews";

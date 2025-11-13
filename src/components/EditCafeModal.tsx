@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { sql } from "@/integrations/neon/client";
 import { toast } from "sonner";
 import { CafeFormProvider, useCafeForm } from "@/contexts/CafeFormContext";
-import { Cafe } from "@/integrations/neon/types";
+import { Cafe } from "@/integrations/server/types";
 import EditBasicInfo from "./EditCafeModal/EditBasicInfo";
+import { getCafeById, updateCafe } from "@/integrations/server/cafe";
 
 interface EditCafeModalProps {
   open: boolean;
@@ -23,25 +23,13 @@ const EditCafeModalContent = ({ open, onOpenChange, cafe, onSuccess }: EditCafeM
 
     setIsLoadingData(true);
     try {
-      // Fetch cafe data
-      const cafeData = (await sql`
-        SELECT 
-          c.cafe_id, c.name, c.cafe_photo, c.cafe_location_link,
-          c.location_id, c.operational_days, c.opening_hour, c.closing_hour,
-          c.status, c.created_at, c.updated_at,
-          l.name as location_name
-        FROM cafes c
-        LEFT JOIN locations l ON c.location_id = l.location_id
-        WHERE c.cafe_id = ${cafe.cafe_id}
-      `) as (Cafe & { location_name?: string })[];
-
-      if (cafeData.length === 0) {
+      // Fetch cafe data via API
+      const cafeInfo = await getCafeById(cafe.cafe_id);
+      if (!cafeInfo) {
         toast.error("Cafe not found");
         onOpenChange(false);
         return;
       }
-
-      const cafeInfo = cafeData[0];
 
       // Parse operational_days - handle different formats from database
       let operationalDays: string[] = [];
@@ -106,18 +94,16 @@ const EditCafeModalContent = ({ open, onOpenChange, cafe, onSuccess }: EditCafeM
       const now = new Date().toISOString();
 
       // Update cafe
-      await sql`
-        UPDATE cafes SET
-          name = ${formData.name},
-          cafe_photo = ${formData.cafe_photo},
-          cafe_location_link = ${formData.cafe_location_link},
-          location_id = ${formData.location_id || null},
-          operational_days = ${formData.operational_days},
-          opening_hour = ${formData.opening_hour},
-          closing_hour = ${formData.closing_hour},
-          updated_at = ${now}
-        WHERE cafe_id = ${cafe.cafe_id}
-      `;
+      await updateCafe(cafe.cafe_id, {
+        name: formData.name,
+        cafe_photo: formData.cafe_photo,
+        cafe_location_link: formData.cafe_location_link,
+        location_id: formData.location_id || null,
+        operational_days: formData.operational_days,
+        opening_hour: formData.opening_hour,
+        closing_hour: formData.closing_hour,
+        updated_at: now,
+      });
 
       toast.success("Cafe updated successfully!");
       resetFormData();

@@ -1,6 +1,6 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { sql } from "@/integrations/neon/client";
+import { deleteCafe } from "@/integrations/server/cafe";
 import { toast } from "sonner";
 import { useState } from "react";
 
@@ -26,7 +26,7 @@ const DeleteCafeModal = ({
     setLoading(true);
 
     try {
-      await sql`DELETE FROM cafes WHERE cafe_id = ${cafeId}`;
+      await deleteCafe(cafeId);
 
       toast.success("Cafe deleted successfully!");
       onSuccess();

@@ -4,9 +4,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useCafeForm } from "@/contexts/CafeFormContext";
 import Clock from "@/components/icons/Clock";
-import { sql } from "@/integrations/neon/client";
-import { Cafe, Location } from "@/integrations/neon/types";
+import { Cafe, Location } from "@/integrations/server/types";
 import { toast } from "sonner";
+import { listCafesWithReviews } from "@/integrations/server/cafe";
+import { listLocations } from "@/integrations/server/location";
 
 interface EditBasicInfoProps {
   onSubmit: () => void;
@@ -97,32 +98,30 @@ const EditBasicInfo: React.FC<EditBasicInfoProps> = ({ onSubmit, loading, cafeId
   const fetchCafes = async () => {
     setIsLoading(true);
     try {
-      const cafeList = (await sql`
-        SELECT DISTINCT name FROM cafes 
-        WHERE status = 'approved' 
-        ORDER BY name ASC
-      `) as { name: string }[];
-      const cafeData = cafeList.map((cafe) => ({
-        ...cafe,
-        cafe_id: "",
-        cafe_photo: "",
-        cafe_location_link: "",
-        review: "",
-        price: 0,
-        wifi: 0,
-        seat_comfort: 0,
-        electricity_socket: 0,
-        food_beverage: 0,
-        praying_room: 0,
-        hospitality: 0,
-        toilet: 0,
-        noise: 0,
-        parking: 0,
-        created_by: "",
-        status: "",
-        created_at: "",
-        updated_at: "",
-      }));
+      const cafesApi = await listCafesWithReviews();
+      const cafeData = cafesApi
+        .map((cafe) => ({
+          ...cafe,
+          cafe_id: "",
+          cafe_photo: "",
+          cafe_location_link: "",
+          review: "",
+          price: 0,
+          wifi: 0,
+          seat_comfort: 0,
+          electricity_socket: 0,
+          food_beverage: 0,
+          praying_room: 0,
+          hospitality: 0,
+          toilet: 0,
+          noise: 0,
+          parking: 0,
+          created_by: "",
+          status: "",
+          created_at: "",
+          updated_at: "",
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
       setCafes(cafeData);
       setFilteredCafes(cafeData);
     } catch (error) {
@@ -136,11 +135,7 @@ const EditBasicInfo: React.FC<EditBasicInfoProps> = ({ onSubmit, loading, cafeId
   const fetchLocations = async () => {
     setIsLocationLoading(true);
     try {
-      const locationList = (await sql`
-        SELECT location_id, name, created_at, updated_at
-        FROM locations
-        ORDER BY name ASC
-      `) as Location[];
+      const locationList = await listLocations();
       setLocations(locationList);
       setFilteredLocations(locationList);
     } catch (error) {

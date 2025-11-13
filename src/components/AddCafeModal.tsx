@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { sql } from "@/integrations/neon/client";
 import { toast } from "sonner";
 import { CafeFormProvider, useCafeForm } from "@/contexts/CafeFormContext";
 import AddBasicInfo from "./AddCafeModal/AddBasicInfo";
 import AddCafeDetails from "./AddCafeModal/AddCafeDetails";
+import { createCafe } from "@/integrations/server/cafe";
+import { createReview } from "@/integrations/server/reviews";
 
 interface AddCafeModalProps {
   open: boolean;
@@ -23,36 +24,39 @@ const AddCafeModalContent = ({ open, onOpenChange, onSuccess }: AddCafeModalProp
       const cafeId = crypto.randomUUID();
       const now = new Date().toISOString();
 
-      // Insert cafe
-      await sql`
-        INSERT INTO cafes (
-          cafe_id, name, cafe_photo, cafe_location_link, location_id,
-          operational_days, opening_hour, closing_hour,
-          status, created_at, updated_at
-        ) VALUES (
-          ${cafeId}, ${formData.name}, ${formData.cafe_photo}, 
-          ${formData.cafe_location_link}, ${formData.location_id || null},
-          ${formData.operational_days}, ${formData.opening_hour}, ${formData.closing_hour},
-          'approved', ${now}, ${now}
-        )
-      `;
+      // Create cafe via API
+      await createCafe({
+        cafe_id: cafeId,
+        name: formData.name,
+        cafe_photo: formData.cafe_photo,
+        cafe_location_link: formData.cafe_location_link,
+        location_id: formData.location_id || null,
+        operational_days: formData.operational_days,
+        opening_hour: formData.opening_hour,
+        closing_hour: formData.closing_hour,
+        status: "approved",
+        created_at: now,
+        updated_at: now,
+      });
 
-      // Insert review
-      await sql`
-        INSERT INTO reviews (
-          cafe_id, review,
-          price, wifi, seat_comfort, electricity_socket, food_beverage,
-          praying_room, hospitality, toilet, noise, parking,
-          created_by, created_at, updated_at
-        ) VALUES (
-          ${cafeId}, ${formData.review},
-          ${formData.price}, ${formData.wifi}, ${formData.seat_comfort}, 
-          ${formData.electricity_socket}, ${formData.food_beverage},
-          ${formData.praying_room}, ${formData.hospitality}, ${formData.toilet}, 
-          ${formData.noise}, ${formData.parking},
-          ${formData.contributor_name}, ${now}, ${now}
-        )
-      `;
+      // Create initial review via API
+      await createReview({
+        cafe_id: cafeId,
+        review: formData.review,
+        price: formData.price,
+        wifi: formData.wifi,
+        seat_comfort: formData.seat_comfort,
+        electricity_socket: formData.electricity_socket,
+        food_beverage: formData.food_beverage,
+        praying_room: formData.praying_room,
+        hospitality: formData.hospitality,
+        toilet: formData.toilet,
+        noise: formData.noise,
+        parking: formData.parking,
+        created_by: formData.contributor_name,
+        created_at: now,
+        updated_at: now,
+      });
 
       toast.success("Cafe added successfully!");
       resetFormData();

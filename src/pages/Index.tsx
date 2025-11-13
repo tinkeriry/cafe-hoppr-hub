@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { sql } from "@/integrations/neon/client";
-import { Cafe, Location, Review } from "@/integrations/neon/types";
+import { Cafe, Location, Review } from "@/integrations/server/types";
+import { listLocations } from "@/integrations/server/location";
+import { listCafesWithReviews } from "@/integrations/server/cafe";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import CafeCard from "@/components/CafeCard";
@@ -45,11 +46,7 @@ const Index = () => {
 
   const fetchLocations = async () => {
     try {
-      const locationList = (await sql`
-        SELECT location_id, name, created_at, updated_at
-        FROM locations
-        ORDER BY name ASC
-      `) as Location[];
+      const locationList = await listLocations();
       setLocations(locationList);
     } catch (error) {
       console.error("Error fetching locations:", error);
@@ -142,85 +139,7 @@ const Index = () => {
   const fetchCafes = async () => {
     setIsLoading(true);
     try {
-      const cafesWithReviews = (await sql`
-        SELECT 
-          c.cafe_id,
-          c.name,
-          c.cafe_photo,
-          c.cafe_location_link,
-          c.location_id,
-          l.name as location_name,
-          c.operational_days,
-          c.opening_hour,
-          c.closing_hour,
-          c.status,
-          c.created_at,
-          c.updated_at,
-          COALESCE(
-            jsonb_agg(
-              jsonb_build_object(
-                'review_id', r.review_id,
-                'cafe_id', r.cafe_id,
-                'review', r.review,
-                'price', r.price,
-                'wifi', r.wifi,
-                'seat_comfort', r.seat_comfort,
-                'electricity_socket', r.electricity_socket,
-                'food_beverage', r.food_beverage,
-                'praying_room', r.praying_room,
-                'hospitality', r.hospitality,
-                'toilet', r.toilet,
-                'noise', r.noise,
-                'parking', r.parking,
-                'created_by', r.created_by,
-                'created_at', r.created_at,
-                'updated_at', r.updated_at
-              ) ORDER BY r.created_at DESC
-            ) FILTER (WHERE r.review_id IS NOT NULL),
-            '[]'::jsonb
-          ) as reviews
-        FROM cafes c
-        LEFT JOIN reviews r ON r.cafe_id = c.cafe_id
-        LEFT JOIN locations l ON c.location_id = l.location_id
-        WHERE c.status = 'approved' 
-        GROUP BY c.cafe_id, c.name, c.cafe_photo, c.cafe_location_link, 
-                 c.location_id, l.name, c.operational_days, c.opening_hour, c.closing_hour,
-                 c.status, c.created_at, c.updated_at
-        ORDER BY c.created_at DESC
-      `) as Array<{
-        cafe_id: string;
-        name: string;
-        cafe_photo: string;
-        cafe_location_link: string;
-        location_id: string | null;
-        location_name: string | null;
-        operational_days?: string[];
-        opening_hour?: string;
-        closing_hour?: string;
-        status: string;
-        created_at: string;
-        updated_at: string;
-        reviews: unknown;
-      }>;
-
-      // Map to Cafe interface - parse JSON reviews array
-      const cafes = cafesWithReviews.map((row) => {
-        let reviews: Cafe["reviews"] = [];
-        if (row.reviews) {
-          if (Array.isArray(row.reviews)) {
-            reviews = row.reviews as Cafe["reviews"];
-          } else if (typeof row.reviews === "string") {
-            reviews = JSON.parse(row.reviews) as Cafe["reviews"];
-          } else {
-            reviews = row.reviews as Cafe["reviews"];
-          }
-        }
-        return {
-          ...row,
-          reviews: reviews || [],
-        };
-      }) as Cafe[];
-
+      const cafes = await listCafesWithReviews();
       setCafes(cafes);
       setFilteredCafes(cafes);
     } catch (error) {

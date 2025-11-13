@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useNavigate } from "react-router-dom";
-import { sql } from "@/integrations/neon/client";
-import { Cafe, Review } from "@/integrations/neon/types";
+import { Cafe, Review } from "@/integrations/server/types";
+import { getCafeById } from "@/integrations/server/cafe";
+import { listReviewsByCafe } from "@/integrations/server/reviews";
 import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
 import AddCafeModal from "@/components/AddCafeModal";
@@ -46,19 +47,10 @@ const CafeDetail = () => {
   const fetchCafeDetails = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Fetch cafe details with location
-      const cafeData = (await sql`
-        SELECT 
-          c.cafe_id, c.name, c.cafe_photo, c.cafe_location_link,
-          c.location_id, c.operational_days, c.opening_hour, c.closing_hour,
-          c.status, c.created_at, c.updated_at,
-          l.name as location_name
-        FROM cafes c
-        LEFT JOIN locations l ON c.location_id = l.location_id
-        WHERE c.cafe_id = ${cafeId} AND c.status = 'approved'
-      `) as (Cafe & { location_name?: string })[];
+      // Fetch cafe details via API
+      const cafeInfo = await getCafeById(cafeId!);
 
-      if (cafeData.length === 0) {
+      if (!cafeInfo) {
         toast.error("Cafe not found");
         navigate("/");
         return;
@@ -66,7 +58,6 @@ const CafeDetail = () => {
 
       // Parse operational_days if it's a string (PostgreSQL array format)
       let operationalDays: string[] = [];
-      const cafeInfo = cafeData[0];
       if (cafeInfo.operational_days) {
         if (Array.isArray(cafeInfo.operational_days)) {
           operationalDays = [...cafeInfo.operational_days];
@@ -85,17 +76,12 @@ const CafeDetail = () => {
 
       setCafe({
         ...cafeInfo,
-        location_name: cafeInfo.location_name,
+        location_name: (cafeInfo as Cafe & { location_name?: string }).location_name,
         operational_days: operationalDays,
       });
 
-      // Fetch all reviews for this cafe
-      const reviewsData = (await sql`
-        SELECT *
-        FROM reviews
-        WHERE cafe_id = ${cafeId}
-        ORDER BY created_at DESC
-      `) as Review[];
+      // Fetch all reviews for this cafe via API
+      const reviewsData = await listReviewsByCafe(cafeId!);
 
       setReviews(reviewsData);
     } catch (error) {

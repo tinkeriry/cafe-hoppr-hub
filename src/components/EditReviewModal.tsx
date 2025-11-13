@@ -4,9 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { sql } from "@/integrations/neon/client";
 import { toast } from "sonner";
-import { Review } from "@/integrations/neon/types";
+import { Review } from "@/integrations/server/types";
+import { listContributors, updateReview } from "@/integrations/server/reviews";
 import Price from "@/components/icons/Price";
 import Food from "@/components/icons/Food";
 import Seat from "@/components/icons/Seat";
@@ -142,12 +142,7 @@ const EditReviewModal = ({
   const fetchContributors = async () => {
     setIsContributorLoading(true);
     try {
-      const contributorList = (await sql`
-        SELECT DISTINCT created_by FROM reviews 
-        WHERE created_by IS NOT NULL AND created_by != ''
-        ORDER BY created_by ASC
-      `) as { created_by: string }[];
-      const contributorNames = contributorList.map((c) => c.created_by);
+      const contributorNames = await listContributors();
       setContributors(contributorNames);
       setFilteredContributors(contributorNames);
     } catch (error) {
@@ -304,24 +299,22 @@ const EditReviewModal = ({
     try {
       const now = new Date().toISOString();
 
-      // Update review
-      await sql`
-        UPDATE reviews SET
-          review = ${reviewText},
-          price = ${price},
-          wifi = ${wifi},
-          seat_comfort = ${seatComfort},
-          electricity_socket = ${electricitySocket},
-          food_beverage = ${foodBeverage},
-          praying_room = ${prayingRoom},
-          hospitality = ${hospitality},
-          toilet = ${toilet},
-          noise = ${noise},
-          parking = ${parking},
-          created_by = ${contributorName},
-          updated_at = ${now}
-        WHERE review_id = ${review.review_id}
-      `;
+      // Update review via API
+      await updateReview(review.review_id, {
+        review: reviewText,
+        price,
+        wifi,
+        seat_comfort: seatComfort,
+        electricity_socket: electricitySocket,
+        food_beverage: foodBeverage,
+        praying_room: prayingRoom,
+        hospitality,
+        toilet,
+        noise,
+        parking,
+        created_by: contributorName,
+        updated_at: now,
+      });
 
       toast.success("Review updated successfully!");
       onSuccess();

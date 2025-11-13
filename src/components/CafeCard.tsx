@@ -18,7 +18,7 @@ import Smile from "@/components/icons/Smile";
 import Park from "@/components/icons/Park";
 import ThreeDots from "@/components/icons/ThreeDots";
 import { MapPin, CircleDot, XCircle } from "lucide-react";
-import { Review } from "@/integrations/neon/types";
+import { Review } from "@/integrations/server/types";
 
 interface CafeCardProps {
   cafe: {
