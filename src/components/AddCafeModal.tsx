@@ -4,44 +4,35 @@ import { toast } from "sonner";
 import { CafeFormProvider, useCafeForm } from "@/contexts/CafeFormContext";
 import AddBasicInfo from "./AddCafeModal/AddBasicInfo";
 import AddCafeDetails from "./AddCafeModal/AddCafeDetails";
-import { createCafe } from "@/integrations/server/cafe";
-import { createReview } from "@/integrations/server/reviews";
+import { useCreateCafe } from "@/hooks/useCafeApi";
 
 interface AddCafeModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  token?: string;
 }
 
-const AddCafeModalContent = ({ open, onOpenChange, onSuccess }: AddCafeModalProps) => {
+const AddCafeModalContent = ({ open, onOpenChange, onSuccess, token }: AddCafeModalProps) => {
   const { formData, resetFormData, currentPage, setCurrentPage } = useCafeForm();
+  const createCafeMutation = useCreateCafe();
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
     setLoading(true);
 
     try {
-      const cafeId = crypto.randomUUID();
-      const now = new Date().toISOString();
-
-      // Create cafe via API
-      await createCafe({
-        cafe_id: cafeId,
+      // Create cafe with review fields via API
+      await createCafeMutation.mutateAsync({
+        token: token || "dummy-token", // Use provided token or fallback to dummy
         name: formData.name,
-        cafe_photo: formData.cafe_photo,
+        cafe_photos: formData.cafe_photos_file || undefined,
         cafe_location_link: formData.cafe_location_link,
-        location_id: formData.location_id || null,
+        location_id: formData.location_id || "",
         operational_days: formData.operational_days,
         opening_hour: formData.opening_hour,
         closing_hour: formData.closing_hour,
-        status: "approved",
-        created_at: now,
-        updated_at: now,
-      });
-
-      // Create initial review via API
-      await createReview({
-        cafe_id: cafeId,
+        // Review fields
         review: formData.review,
         price: formData.price,
         wifi: formData.wifi,
@@ -53,9 +44,7 @@ const AddCafeModalContent = ({ open, onOpenChange, onSuccess }: AddCafeModalProp
         toilet: formData.toilet,
         noise: formData.noise,
         parking: formData.parking,
-        created_by: formData.contributor_name,
-        created_at: now,
-        updated_at: now,
+        contributor_name: formData.contributor_name,
       });
 
       toast.success("Cafe added successfully!");
@@ -76,10 +65,6 @@ const AddCafeModalContent = ({ open, onOpenChange, onSuccess }: AddCafeModalProp
 
   const handlePrevious = () => {
     setCurrentPage(1);
-  };
-
-  const handleClose = () => {
-    onOpenChange(false);
   };
 
   return (

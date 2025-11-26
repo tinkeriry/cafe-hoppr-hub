@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { FileUpload } from "@/components/ui/file-upload";
 import { useCafeForm } from "@/contexts/CafeFormContext";
 import Clock from "@/components/icons/Clock";
 import { Cafe, Location } from "@/integrations/server/types";
 import { toast } from "sonner";
-import { listCafesWithReviews } from "@/integrations/server/cafe";
-import { listLocations } from "@/integrations/server/location";
+import { useLocations } from "@/hooks/useCafeApi";
 
 interface EditBasicInfoProps {
   onSubmit: () => void;
@@ -17,50 +17,14 @@ interface EditBasicInfoProps {
 
 const EditBasicInfo: React.FC<EditBasicInfoProps> = ({ onSubmit, loading, cafeId }) => {
   const { formData, updateFormData } = useCafeForm();
-  const [cafes, setCafes] = useState<Cafe[]>([]);
-  const [filteredCafes, setFilteredCafes] = useState<Cafe[]>([]);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const { data: locations = [], isLoading: isLocationsLoading } = useLocations();
 
   // Location dropdown state
-  const [locations, setLocations] = useState<Location[]>([]);
   const [filteredLocations, setFilteredLocations] = useState<Location[]>([]);
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
-  const [isLocationLoading, setIsLocationLoading] = useState(false);
   const [locationSearchQuery, setLocationSearchQuery] = useState("");
   const locationDropdownRef = useRef<HTMLDivElement>(null);
   const locationSearchInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    fetchCafes();
-    fetchLocations();
-  }, []);
-
-  useEffect(() => {
-    if (searchQuery.trim()) {
-      const filtered = cafes.filter((cafe) =>
-        cafe.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredCafes(filtered);
-    } else {
-      setFilteredCafes(cafes);
-    }
-  }, [searchQuery, cafes]);
-
-  useEffect(() => {
-    if (isDropdownOpen && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [isDropdownOpen]);
-
-  useEffect(() => {
-    if (isLocationDropdownOpen && locationSearchInputRef.current) {
-      locationSearchInputRef.current.focus();
-    }
-  }, [isLocationDropdownOpen]);
 
   useEffect(() => {
     if (locationSearchQuery.trim()) {
@@ -74,10 +38,13 @@ const EditBasicInfo: React.FC<EditBasicInfoProps> = ({ onSubmit, loading, cafeId
   }, [locationSearchQuery, locations]);
 
   useEffect(() => {
+    if (isLocationDropdownOpen && locationSearchInputRef.current) {
+      locationSearchInputRef.current.focus();
+    }
+  }, [isLocationDropdownOpen]);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
       if (
         locationDropdownRef.current &&
         !locationDropdownRef.current.contains(event.target as Node)
@@ -86,89 +53,14 @@ const EditBasicInfo: React.FC<EditBasicInfoProps> = ({ onSubmit, loading, cafeId
       }
     };
 
-    if (isDropdownOpen || isLocationDropdownOpen) {
+    if (isLocationDropdownOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isDropdownOpen, isLocationDropdownOpen]);
-
-  const fetchCafes = async () => {
-    setIsLoading(true);
-    try {
-      const cafesApi = await listCafesWithReviews();
-      const cafeData = cafesApi
-        .map((cafe) => ({
-          ...cafe,
-          cafe_id: "",
-          cafe_photo: "",
-          cafe_location_link: "",
-          review: "",
-          price: 0,
-          wifi: 0,
-          seat_comfort: 0,
-          electricity_socket: 0,
-          food_beverage: 0,
-          praying_room: 0,
-          hospitality: 0,
-          toilet: 0,
-          noise: 0,
-          parking: 0,
-          created_by: "",
-          status: "",
-          created_at: "",
-          updated_at: "",
-        }))
-        .sort((a, b) => a.name.localeCompare(b.name));
-      setCafes(cafeData);
-      setFilteredCafes(cafeData);
-    } catch (error) {
-      console.error("Error fetching cafes:", error);
-      toast.error("Error loading cafe list");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchLocations = async () => {
-    setIsLocationLoading(true);
-    try {
-      const locationList = await listLocations();
-      setLocations(locationList);
-      setFilteredLocations(locationList);
-    } catch (error) {
-      console.error("Error fetching locations:", error);
-      toast.error("Error loading location list");
-    } finally {
-      setIsLocationLoading(false);
-    }
-  };
-
-  const handleAddNewCafe = () => {
-    if (!searchQuery.trim()) {
-      toast.error("Please enter a cafe name");
-      return;
-    }
-
-    // Check if cafe already exists
-    const cafeExists = cafes.some((cafe) => cafe.name.toLowerCase() === searchQuery.toLowerCase());
-
-    if (cafeExists) {
-      toast.error("This cafe already exists in the list");
-      return;
-    }
-
-    updateFormData({ name: searchQuery.trim() });
-    setIsDropdownOpen(false);
-    setSearchQuery("");
-    toast.success("New cafe added to form");
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
+  }, [isLocationDropdownOpen]);
 
   const isValidUrl = (url: string): boolean => {
     try {
@@ -202,8 +94,7 @@ const EditBasicInfo: React.FC<EditBasicInfoProps> = ({ onSubmit, loading, cafeId
   const isFormValid = () => {
     return (
       formData.name.trim() !== "" &&
-      formData.cafe_photo.trim() !== "" &&
-      isValidImageUrl(formData.cafe_photo) &&
+      (formData.cafe_photos_file.length > 0 || formData.cafe_photo.trim() !== "") &&
       formData.cafe_location_link.trim() !== "" &&
       isValidUrl(formData.cafe_location_link) &&
       formData.operational_days.length > 0 &&
@@ -214,128 +105,41 @@ const EditBasicInfo: React.FC<EditBasicInfoProps> = ({ onSubmit, loading, cafeId
     );
   };
 
-  const handleCafeSelect = (cafeName: string) => {
-    updateFormData({ name: cafeName });
-    setIsDropdownOpen(false);
-    setSearchQuery("");
-  };
-
   return (
     <div className="space-y-2.5">
       {/* Cafe Name */}
       <div>
         <Label htmlFor="name">Cafe Name *</Label>
-        <div className="relative" ref={dropdownRef}>
-          <Input
-            id="name"
-            placeholder="Select or add cafe name"
-            value={formData.name}
-            onChange={(e) => updateFormData({ name: e.target.value })}
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            required
-            className="pr-10 cursor-pointer"
-            readOnly
-          />
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M6 9L12 15L18 9"
-                stroke="#746650"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-
-          {/* Dropdown */}
-          {isDropdownOpen && (
-            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-              {/* Search Input */}
-              <div className="p-3 border-b border-gray-100">
-                <Input
-                  ref={searchInputRef}
-                  placeholder="Search existing cafes to avoid duplicates or add unique cafe name"
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  className="w-full"
-                  onKeyPress={(e) => e.key === "Enter" && handleAddNewCafe()}
-                />
-              </div>
-
-              {/* Existing Cafes List (Reference Only) */}
-              <div className="max-h-40 overflow-y-auto">
-                {isLoading ? (
-                  <div className="p-3 text-center text-sm text-gray-500">Loading cafes...</div>
-                ) : filteredCafes.length === 0 ? (
-                  <div className="p-3 text-center text-sm text-gray-500">
-                    {searchQuery.trim()
-                      ? "No existing cafes found matching your search"
-                      : "No existing cafes found"}
-                  </div>
-                ) : (
-                  <div className="p-2">
-                    <div className="text-xs text-gray-500 px-3 py-1 font-medium">
-                      Existing cafes (for reference only):
-                    </div>
-                    {filteredCafes.map((cafe, index) => (
-                      <div
-                        key={index}
-                        className="w-full px-3 py-2 text-left text-sm text-gray-400 bg-gray-50 cursor-not-allowed"
-                      >
-                        ❌ {cafe.name} (already exists)
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Add New Cafe Button */}
-              {searchQuery.trim() &&
-                !cafes.some((cafe) => cafe.name.toLowerCase() === searchQuery.toLowerCase()) && (
-                  <div className="p-3 border-t border-gray-100">
-                    <Button
-                      type="button"
-                      variant="cafe"
-                      size="sm"
-                      onClick={handleAddNewCafe}
-                      className="w-full"
-                    >
-                      Add "{searchQuery}"
-                    </Button>
-                  </div>
-                )}
-            </div>
-          )}
-        </div>
+        <Input
+          id="name"
+          placeholder="Enter cafe name"
+          value={formData.name}
+          onChange={(e) => updateFormData({ name: e.target.value })}
+          required
+        />
       </div>
 
-      {/* Cafe Image */}
+      {/* Cafe Images */}
       <div>
-        <Label htmlFor="image">Cafe Image *</Label>
-        <Input
-          id="image"
-          placeholder="Enter image link"
-          value={formData.cafe_photo}
-          onChange={(e) => updateFormData({ cafe_photo: e.target.value })}
+        <FileUpload
+          id="cafe_photos"
+          label="Cafe Images"
+          accept="image/*"
+          multiple={true}
+          value={formData.cafe_photos_file}
+          onChange={(files) => {
+            updateFormData({
+              cafe_photos_file: files,
+              cafe_photo: files.length > 0 ? "" : formData.cafe_photo,
+            });
+          }}
           required
-          className={
-            formData.cafe_photo.trim() !== "" && !isValidImageUrl(formData.cafe_photo)
-              ? "border-red-500"
-              : ""
+          error={
+            formData.cafe_photos_file.length === 0 && formData.cafe_photo === ""
+              ? "Please upload at least one cafe image"
+              : undefined
           }
         />
-        {formData.cafe_photo.trim() !== "" && !isValidImageUrl(formData.cafe_photo) && (
-          <p className="text-red-500 text-sm mt-1">
-            Please enter a valid image URL (e.g., .jpg, .png, .gif, .webp, .svg or Unsplash link)
-          </p>
-        )}
       </div>
 
       {/* Cafe Location Area */}
@@ -388,7 +192,7 @@ const EditBasicInfo: React.FC<EditBasicInfoProps> = ({ onSubmit, loading, cafeId
 
               {/* Locations List */}
               <div className="max-h-40 overflow-y-auto">
-                {isLocationLoading ? (
+                {isLocationsLoading ? (
                   <div className="p-3 text-center text-sm text-gray-500">Loading locations...</div>
                 ) : filteredLocations.length === 0 ? (
                   <div className="p-3 text-center text-sm text-gray-500">

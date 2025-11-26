@@ -7,7 +7,6 @@ import { listReviewsByCafe } from "@/integrations/server/reviews";
 import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
 import AddCafeModal from "@/components/AddCafeModal";
-import EditReviewModal from "@/components/EditReviewModal";
 import FilledYellowStar from "@/components/icons/FilledYellowStar";
 import HalfFilledYellowStar from "@/components/icons/HalfFilledYellowStar";
 import EmptyYellowStar from "@/components/icons/EmptyYellowStar";
@@ -26,6 +25,8 @@ import Clock from "@/components/icons/Clock";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { formatPhotoUrl } from "@/lib/utils";
+import { ImageCarousel } from "@/components/ui/image-carousel";
 
 const CafeDetail = () => {
   const { cafeId } = useParams<{ cafeId: string }>();
@@ -33,7 +34,6 @@ const CafeDetail = () => {
   const [cafe, setCafe] = useState<Cafe | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [imageError, setImageError] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [showEditReviewModal, setShowEditReviewModal] = useState(false);
@@ -76,14 +76,13 @@ const CafeDetail = () => {
 
       setCafe({
         ...cafeInfo,
-        location_name: (cafeInfo as Cafe & { location_name?: string }).location_name,
         operational_days: operationalDays,
       });
 
-      // Fetch all reviews for this cafe via API
-      const reviewsData = await listReviewsByCafe(cafeId!);
-
-      setReviews(reviewsData);
+      // Set reviews from cafe details
+      if (cafeInfo.reviews) {
+        setReviews(cafeInfo.reviews);
+      }
     } catch (error) {
       console.error("Error fetching cafe details:", error);
       toast.error("Error loading cafe details");
@@ -141,10 +140,6 @@ const CafeDetail = () => {
     if (reviewRatings.length === 0) return 0;
     const sum = reviewRatings.reduce((acc, rating) => acc + rating, 0);
     return sum / reviewRatings.length;
-  };
-
-  const handleImageError = () => {
-    setImageError(true);
   };
 
   const handleEditReview = (review: Review) => {
@@ -228,9 +223,6 @@ const CafeDetail = () => {
           >
             <ArrowLeft className="w-6 h-6" strokeWidth={2.5} />
           </button>
-          <Button variant="cafe" onClick={() => setShowAddModal(true)} className="text-sm">
-            Add Cafe
-          </Button>
         </div>
       </div>
 
@@ -262,10 +254,10 @@ const CafeDetail = () => {
               </div>
 
               {/* Location */}
-              {cafe.location_name && (
+              {cafe.location?.name && (
                 <div className="flex items-center gap-2 mb-4">
                   <span className="text-lg">📍</span>
-                  <span className="text-base font-medium text-[#604926]">{cafe.location_name}</span>
+                  <span className="text-base font-medium text-[#604926]">{cafe.location.name}</span>
                 </div>
               )}
 
@@ -308,23 +300,9 @@ const CafeDetail = () => {
               </div>
             </div>
 
-            {/* Right Column - Cafe Image */}
+            {/* Right Column - Cafe Image Carousel */}
             <div>
-              {imageError || !cafe.cafe_photo ? (
-                <div className="w-full h-[400px] bg-gradient-to-br from-[#e5d8c2] to-[#d4c4a8] flex items-center justify-center rounded-lg">
-                  <div className="text-center">
-                    <div className="text-8xl mb-4">☕</div>
-                    <p className="text-[#746650] font-medium text-lg">No Image</p>
-                  </div>
-                </div>
-              ) : (
-                <img
-                  src={cafe.cafe_photo}
-                  alt={cafe.name}
-                  className="w-full h-[400px] object-cover rounded-lg"
-                  onError={handleImageError}
-                />
-              )}
+              <ImageCarousel photos={cafe.photos || []} altText={cafe.name} />
             </div>
           </div>
 
@@ -387,7 +365,7 @@ const CafeDetail = () => {
                       >
                         <ThreeDots />
                       </button>
-                      {showActionMenu[review.review_id] &&
+                      {/* {showActionMenu[review.review_id] &&
                         menuPositions[review.review_id] &&
                         createPortal(
                           <div
@@ -413,7 +391,7 @@ const CafeDetail = () => {
                             </div>
                           </div>,
                           document.body
-                        )}
+                        )} */}
                     </div>
                     <div className="flex items-center gap-2 mb-2">
                       <div className="flex items-center gap-1">
@@ -510,28 +488,6 @@ const CafeDetail = () => {
       </div>
 
       <Footer />
-
-      {/* Add Cafe Modal */}
-      <AddCafeModal
-        open={showAddModal}
-        onOpenChange={setShowAddModal}
-        onSuccess={() => {
-          // Optionally refresh the page or navigate after adding
-          fetchCafeDetails();
-        }}
-      />
-
-      {/* Edit Review Modal */}
-      <EditReviewModal
-        open={showEditReviewModal}
-        onOpenChange={setShowEditReviewModal}
-        review={selectedReview}
-        cafeName={cafe?.name}
-        onSuccess={() => {
-          fetchCafeDetails();
-          setSelectedReview(null);
-        }}
-      />
     </div>
   );
 };

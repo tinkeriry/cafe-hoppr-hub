@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Cafe } from "@/integrations/server/types";
+import { createReview } from "@/integrations/server/reviews";
+import { listCafesWithReviews } from "@/integrations/server/cafe";
 import Price from "@/components/icons/Price";
 import Food from "@/components/icons/Food";
 import Seat from "@/components/icons/Seat";
@@ -24,13 +26,15 @@ interface AddReviewModalProps {
   onOpenChange: (open: boolean) => void;
   cafe: Cafe | null;
   onSuccess: () => void;
+  token?: string;
 }
 
-const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalProps) => {
+const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess, token }: AddReviewModalProps) => {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Page 1 fields
   const [contributorName, setContributorName] = useState("");
+  const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(cafe);
   const [cafeName, setCafeName] = useState("");
   const [review, setReview] = useState("");
 
@@ -48,26 +52,29 @@ const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalP
 
   const [loading, setLoading] = useState(false);
 
-  // Dropdown states for contributor
-  const [contributors, setContributors] = useState<string[]>([]);
-  const [filteredContributors, setFilteredContributors] = useState<string[]>([]);
-  const [isContributorDropdownOpen, setIsContributorDropdownOpen] = useState(false);
-  const [isContributorLoading, setIsContributorLoading] = useState(false);
-  const [contributorSearchQuery, setContributorSearchQuery] = useState("");
-  const contributorDropdownRef = useRef<HTMLDivElement>(null);
-  const contributorSearchInputRef = useRef<HTMLInputElement>(null);
+  // Dropdown states for cafe
+  const [cafes, setCafes] = useState<Cafe[]>([]);
+  const [filteredCafes, setFilteredCafes] = useState<Cafe[]>([]);
+  const [isCafeDropdownOpen, setIsCafeDropdownOpen] = useState(false);
+  const [isCafeLoading, setIsCafeLoading] = useState(false);
+  const [cafeSearchQuery, setCafeSearchQuery] = useState("");
+  const cafeDropdownRef = useRef<HTMLDivElement>(null);
+  const cafeSearchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
-      fetchContributors();
-      // Pre-fill cafe name if cafe is provided
-      if (cafe?.name) {
+      // Only fetch cafes if cafe prop is null
+      if (!cafe) {
+        fetchCafes();
+      } else {
+        setSelectedCafe(cafe);
         setCafeName(cafe.name);
       }
     } else {
       // Reset form when modal closes
       setCurrentPage(1);
       setContributorName("");
+      setSelectedCafe(cafe);
       setCafeName(cafe?.name || "");
       setReview("");
       setPrice(0);
@@ -80,80 +87,56 @@ const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalP
       setToilet(0);
       setNoise(0);
       setParking(0);
-      setContributorSearchQuery("");
+      setCafeSearchQuery("");
     }
   }, [open, cafe]);
 
-  useEffect(() => {
-    if (contributorSearchQuery.trim()) {
-      const filtered = contributors.filter((contributor) =>
-        contributor.toLowerCase().includes(contributorSearchQuery.toLowerCase())
-      );
-      setFilteredContributors(filtered);
-    } else {
-      setFilteredContributors(contributors);
+  const fetchCafes = async () => {
+    setIsCafeLoading(true);
+    try {
+      const cafeList = await listCafesWithReviews();
+      setCafes(cafeList);
+      setFilteredCafes(cafeList);
+    } catch (error) {
+      console.error("Error fetching cafes:", error);
+      toast.error("Error loading cafe list");
+    } finally {
+      setIsCafeLoading(false);
     }
-  }, [contributorSearchQuery, contributors]);
+  };
 
   useEffect(() => {
-    if (isContributorDropdownOpen && contributorSearchInputRef.current) {
-      contributorSearchInputRef.current.focus();
+    if (cafeSearchQuery.trim()) {
+      const filtered = cafes.filter((cafe) =>
+        cafe.name.toLowerCase().includes(cafeSearchQuery.toLowerCase())
+      );
+      setFilteredCafes(filtered);
+    } else {
+      setFilteredCafes(cafes);
     }
-  }, [isContributorDropdownOpen]);
+  }, [cafeSearchQuery, cafes]);
+
+  useEffect(() => {
+    if (isCafeDropdownOpen && cafeSearchInputRef.current) {
+      cafeSearchInputRef.current.focus();
+    }
+  }, [isCafeDropdownOpen]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        contributorDropdownRef.current &&
-        !contributorDropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsContributorDropdownOpen(false);
+      if (cafeDropdownRef.current && !cafeDropdownRef.current.contains(event.target as Node)) {
+        setIsCafeDropdownOpen(false);
       }
     };
 
-    if (isContributorDropdownOpen) {
+    if (isCafeDropdownOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isContributorDropdownOpen]);
-
-  const fetchContributors = async () => {
-    setIsContributorLoading(true);
-    try {
-      const contributorNames = await listContributors();
-      setContributors(contributorNames);
-      setFilteredContributors(contributorNames);
-    } catch (error) {
-      console.error("Error fetching contributors:", error);
-      toast.error("Error loading contributor list");
-    } finally {
-      setIsContributorLoading(false);
-    }
-  };
-
-  const handleAddNewContributor = () => {
-    if (!contributorSearchQuery.trim()) {
-      toast.error("Please enter a contributor name");
-      return;
-    }
-
-    const contributorExists = contributors.some(
-      (contributor) => contributor.toLowerCase() === contributorSearchQuery.toLowerCase()
-    );
-
-    if (contributorExists) {
-      toast.error("This contributor already exists in the list");
-      return;
-    }
-
-    setContributorName(contributorSearchQuery.trim());
-    setIsContributorDropdownOpen(false);
-    setContributorSearchQuery("");
-    toast.success("New contributor added");
-  };
+  }, [isCafeDropdownOpen]);
 
   const handleRatingFieldChange = (field: string, rating: number) => {
     switch (field) {
@@ -250,11 +233,10 @@ const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalP
   );
 
   const isPage1Valid = () => {
-    return contributorName.trim() !== "" && cafeName.trim() !== "" && review.trim() !== "";
+    return contributorName.trim() !== "" && selectedCafe !== null && review.trim() !== "";
   };
 
   const isPage2Valid = () => {
-    // Required fields: price, seat_comfort, wifi, electricity_socket
     return price > 0 && seatComfort > 0 && wifi > 0 && electricitySocket > 0;
   };
 
@@ -271,18 +253,18 @@ const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalP
 
     try {
       // Use the cafe_id from the selected cafe
-      const cafeId = cafe?.cafe_id;
+      const cafeId = selectedCafe?.cafe_id;
       if (!cafeId) {
         toast.error("Cafe ID not found. Please try again.");
         setLoading(false);
         return;
       }
 
-      const now = new Date().toISOString();
-
       // Create review via API
       await createReview({
+        token: token || "",
         cafe_id: cafeId,
+        reviewer_name: contributorName,
         review,
         price,
         wifi,
@@ -294,9 +276,6 @@ const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalP
         toilet,
         noise,
         parking,
-        created_by: contributorName,
-        created_at: now,
-        updated_at: now,
       });
 
       toast.success("Review added successfully!");
@@ -306,6 +285,7 @@ const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalP
       // Reset form
       setCurrentPage(1);
       setContributorName("");
+      setSelectedCafe(cafe);
       setCafeName(cafe?.name || "");
       setReview("");
       setPrice(0);
@@ -318,7 +298,7 @@ const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalP
       setToilet(0);
       setNoise(0);
       setParking(0);
-      setContributorSearchQuery("");
+      setCafeSearchQuery("");
     } catch (error) {
       console.error("Error adding review:", error);
       toast.error("Error adding review. Please try again.");
@@ -326,8 +306,6 @@ const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalP
       setLoading(false);
     }
   };
-
-  if (!cafe) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -350,120 +328,114 @@ const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalP
           <div className="space-y-2.5">
             {/* Contributor Name */}
             <div>
-              <Label htmlFor="contributor_name">Contributor Name *</Label>
-              <div className="relative" ref={contributorDropdownRef}>
-                <Input
-                  id="contributor_name"
-                  placeholder="Select or add contributor name"
-                  value={contributorName}
-                  onChange={(e) => setContributorName(e.target.value)}
-                  onClick={() => setIsContributorDropdownOpen(!isContributorDropdownOpen)}
-                  required
-                  className="pr-10 cursor-pointer"
-                  readOnly
-                />
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M6 9L12 15L18 9"
-                      stroke="#746650"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
-
-                {/* Dropdown */}
-                {isContributorDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {/* Search Input */}
-                    <div className="p-3 border-b border-gray-100">
-                      <Input
-                        ref={contributorSearchInputRef}
-                        placeholder="Search existing contributors to avoid duplicates or add unique contributor name"
-                        value={contributorSearchQuery}
-                        onChange={(e) => setContributorSearchQuery(e.target.value)}
-                        className="w-full"
-                        onKeyPress={(e) => e.key === "Enter" && handleAddNewContributor()}
-                      />
-                    </div>
-
-                    {/* Existing Contributors List */}
-                    <div className="max-h-40 overflow-y-auto">
-                      {isContributorLoading ? (
-                        <div className="p-3 text-center text-sm text-gray-500">
-                          Loading contributors...
-                        </div>
-                      ) : filteredContributors.length === 0 ? (
-                        <div className="p-3 text-center text-sm text-gray-500">
-                          {contributorSearchQuery.trim()
-                            ? "No existing contributors found matching your search"
-                            : "No existing contributors found"}
-                        </div>
-                      ) : (
-                        <div className="p-2">
-                          <div className="text-xs text-gray-500 px-3 py-1 font-medium">
-                            Existing contributors:
-                          </div>
-                          {filteredContributors.map((contributor, index) => (
-                            <div
-                              key={index}
-                              onClick={() => {
-                                setContributorName(contributor);
-                                setIsContributorDropdownOpen(false);
-                                setContributorSearchQuery("");
-                              }}
-                              className="w-full px-3 py-2 text-left text-sm text-[#746650] hover:bg-gray-100 cursor-pointer rounded transition-colors"
-                            >
-                              ✓ {contributor}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Add New Contributor Button */}
-                    {contributorSearchQuery.trim() &&
-                      !contributors.some(
-                        (contributor) =>
-                          contributor.toLowerCase() === contributorSearchQuery.toLowerCase()
-                      ) && (
-                        <div className="p-3 border-t border-gray-100">
-                          <Button
-                            type="button"
-                            variant="cafe"
-                            size="sm"
-                            onClick={handleAddNewContributor}
-                            className="w-full"
-                          >
-                            Add "{contributorSearchQuery}"
-                          </Button>
-                        </div>
-                      )}
-                  </div>
-                )}
-              </div>
+              <Label htmlFor="contributor_name">Reviewer Name *</Label>
+              <Input
+                id="contributor_name"
+                placeholder="Enter your name"
+                value={contributorName}
+                onChange={(e) => setContributorName(e.target.value)}
+                required
+              />
             </div>
 
             {/* Cafe Name */}
             <div>
               <Label htmlFor="cafe_name">Cafe Name *</Label>
-              <Input
-                id="cafe_name"
-                value={cafeName}
-                disabled
-                className="bg-[#E2DACF] cursor-not-allowed"
-              />
-              <p className="text-xs text-[#8b7a5f] mt-1">
-                This review will be added to the selected cafe
-              </p>
+              {cafe ? (
+                // If cafe is provided via prop, show it as disabled
+                <>
+                  <Input
+                    id="cafe_name"
+                    value={cafeName}
+                    disabled
+                    className="bg-[#E2DACF] cursor-not-allowed"
+                  />
+                  <p className="text-xs text-[#8b7a5f] mt-1">
+                    This review will be added to the selected cafe
+                  </p>
+                </>
+              ) : (
+                // If cafe is not provided, show searchable dropdown
+                <div className="relative" ref={cafeDropdownRef}>
+                  <Input
+                    id="cafe_name"
+                    placeholder="Select a cafe"
+                    value={selectedCafe?.name || ""}
+                    onChange={(e) => {
+                      // Don't allow direct typing
+                    }}
+                    onClick={() => setIsCafeDropdownOpen(!isCafeDropdownOpen)}
+                    required
+                    className="pr-10 cursor-pointer"
+                    readOnly
+                  />
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M6 9L12 15L18 9"
+                        stroke="#746650"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+
+                  {/* Dropdown */}
+                  {isCafeDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {/* Search Input */}
+                      <div className="p-3 border-b border-gray-100">
+                        <Input
+                          ref={cafeSearchInputRef}
+                          placeholder="Search cafes..."
+                          value={cafeSearchQuery}
+                          onChange={(e) => setCafeSearchQuery(e.target.value)}
+                          className="w-full"
+                        />
+                      </div>
+
+                      {/* Cafes List */}
+                      <div className="max-h-40 overflow-y-auto">
+                        {isCafeLoading ? (
+                          <div className="p-3 text-center text-sm text-gray-500">
+                            Loading cafes...
+                          </div>
+                        ) : filteredCafes.length === 0 ? (
+                          <div className="p-3 text-center text-sm text-gray-500">
+                            {cafeSearchQuery.trim()
+                              ? "No cafes found matching your search"
+                              : "No cafes found"}
+                          </div>
+                        ) : (
+                          <div className="p-2">
+                            {filteredCafes.map((cafeItem) => (
+                              <div
+                                key={cafeItem.cafe_id}
+                                onClick={() => {
+                                  setSelectedCafe(cafeItem);
+                                  setCafeName(cafeItem.name);
+                                  setIsCafeDropdownOpen(false);
+                                  setCafeSearchQuery("");
+                                }}
+                                className="w-full px-3 py-2 text-left text-sm text-[#746650] hover:bg-gray-100 cursor-pointer rounded transition-colors"
+                              >
+                                ✓ {cafeItem.name}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Comment/Review */}
@@ -595,4 +567,3 @@ const AddReviewModal = ({ open, onOpenChange, cafe, onSuccess }: AddReviewModalP
 };
 
 export default AddReviewModal;
-import { listContributors, createReview } from "@/integrations/server/reviews";

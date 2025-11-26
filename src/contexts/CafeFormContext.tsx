@@ -4,6 +4,7 @@ interface CafeFormData {
   // Page 1 - Basic Info
   name: string;
   cafe_photo: string;
+  cafe_photos_file: File[];
   cafe_location_link: string;
   location_id: string;
   review: string;
@@ -36,6 +37,7 @@ interface CafeFormContextType {
 const initialFormData: CafeFormData = {
   name: "",
   cafe_photo: "",
+  cafe_photos_file: [],
   cafe_location_link: "",
   location_id: "",
   review: "",

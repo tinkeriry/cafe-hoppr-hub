@@ -3,13 +3,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { FileUpload } from "@/components/ui/file-upload";
 import { useCafeForm } from "@/contexts/CafeFormContext";
 import Clock from "@/components/icons/Clock";
-import { Cafe, Location } from "@/integrations/server/types";
-import { toast } from "sonner";
-import { listCafesWithReviews } from "@/integrations/server/cafe";
-import { listContributors } from "@/integrations/server/reviews";
-import { listLocations } from "@/integrations/server/location";
+import { Location } from "@/integrations/server/types";
+import { useLocations } from "@/hooks/useCafeApi";
 
 interface AddBasicInfoProps {
   onNext: () => void;
@@ -17,59 +15,14 @@ interface AddBasicInfoProps {
 
 const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
   const { formData, updateFormData } = useCafeForm();
-  const [cafes, setCafes] = useState<Cafe[]>([]);
-  const [filteredCafes, setFilteredCafes] = useState<Cafe[]>([]);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-
-  // Contributor dropdown state
-  const [contributors, setContributors] = useState<string[]>([]);
-  const [filteredContributors, setFilteredContributors] = useState<string[]>([]);
-  const [isContributorDropdownOpen, setIsContributorDropdownOpen] = useState(false);
-  const [isContributorLoading, setIsContributorLoading] = useState(false);
-  const [contributorSearchQuery, setContributorSearchQuery] = useState("");
-  const contributorDropdownRef = useRef<HTMLDivElement>(null);
-  const contributorSearchInputRef = useRef<HTMLInputElement>(null);
+  const { data: locations = [], isLoading: isLocationsLoading } = useLocations();
 
   // Location dropdown state
-  const [locations, setLocations] = useState<Location[]>([]);
   const [filteredLocations, setFilteredLocations] = useState<Location[]>([]);
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
-  const [isLocationLoading, setIsLocationLoading] = useState(false);
   const [locationSearchQuery, setLocationSearchQuery] = useState("");
   const locationDropdownRef = useRef<HTMLDivElement>(null);
   const locationSearchInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    fetchCafes();
-    fetchContributors();
-    fetchLocations();
-  }, []);
-
-  useEffect(() => {
-    if (searchQuery.trim()) {
-      const filtered = cafes.filter((cafe) =>
-        cafe.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredCafes(filtered);
-    } else {
-      setFilteredCafes(cafes);
-    }
-  }, [searchQuery, cafes]);
-
-  useEffect(() => {
-    if (contributorSearchQuery.trim()) {
-      const filtered = contributors.filter((contributor) =>
-        contributor.toLowerCase().includes(contributorSearchQuery.toLowerCase())
-      );
-      setFilteredContributors(filtered);
-    } else {
-      setFilteredContributors(contributors);
-    }
-  }, [contributorSearchQuery, contributors]);
 
   useEffect(() => {
     if (locationSearchQuery.trim()) {
@@ -82,167 +35,6 @@ const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
     }
   }, [locationSearchQuery, locations]);
 
-  useEffect(() => {
-    if (isDropdownOpen && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [isDropdownOpen]);
-
-  useEffect(() => {
-    if (isContributorDropdownOpen && contributorSearchInputRef.current) {
-      contributorSearchInputRef.current.focus();
-    }
-  }, [isContributorDropdownOpen]);
-
-  useEffect(() => {
-    if (isLocationDropdownOpen && locationSearchInputRef.current) {
-      locationSearchInputRef.current.focus();
-    }
-  }, [isLocationDropdownOpen]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-      if (
-        contributorDropdownRef.current &&
-        !contributorDropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsContributorDropdownOpen(false);
-      }
-      if (
-        locationDropdownRef.current &&
-        !locationDropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsLocationDropdownOpen(false);
-      }
-    };
-
-    if (isDropdownOpen || isContributorDropdownOpen || isLocationDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isDropdownOpen, isContributorDropdownOpen, isLocationDropdownOpen]);
-
-  const fetchCafes = async () => {
-    setIsLoading(true);
-    try {
-      const cafesApi = await listCafesWithReviews();
-      const cafeData = cafesApi
-        .map((cafe) => ({
-          ...cafe,
-          cafe_id: "",
-          cafe_photo: "",
-          cafe_location_link: "",
-          review: "",
-          price: 0,
-          wifi: 0,
-          seat_comfort: 0,
-          electricity_socket: 0,
-          food_beverage: 0,
-          praying_room: 0,
-          hospitality: 0,
-          toilet: 0,
-          noise: 0,
-          parking: 0,
-          created_by: "",
-          status: "",
-          created_at: "",
-          updated_at: "",
-        }))
-        .sort((a, b) => a.name.localeCompare(b.name));
-      setCafes(cafeData);
-      setFilteredCafes(cafeData);
-    } catch (error) {
-      console.error("Error fetching cafes:", error);
-      toast.error("Error loading cafe list");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchContributors = async () => {
-    setIsContributorLoading(true);
-    try {
-      const contributorNames = await listContributors();
-      setContributors(contributorNames);
-      setFilteredContributors(contributorNames);
-    } catch (error) {
-      console.error("Error fetching contributors:", error);
-      toast.error("Error loading contributor list");
-    } finally {
-      setIsContributorLoading(false);
-    }
-  };
-
-  const fetchLocations = async () => {
-    setIsLocationLoading(true);
-    try {
-      const locationList = await listLocations();
-      setLocations(locationList);
-      setFilteredLocations(locationList);
-    } catch (error) {
-      console.error("Error fetching locations:", error);
-      toast.error("Error loading location list");
-    } finally {
-      setIsLocationLoading(false);
-    }
-  };
-
-  const handleAddNewCafe = () => {
-    if (!searchQuery.trim()) {
-      toast.error("Please enter a cafe name");
-      return;
-    }
-
-    // Check if cafe already exists
-    const cafeExists = cafes.some((cafe) => cafe.name.toLowerCase() === searchQuery.toLowerCase());
-
-    if (cafeExists) {
-      toast.error("This cafe already exists in the list");
-      return;
-    }
-
-    updateFormData({ name: searchQuery.trim() });
-    setIsDropdownOpen(false);
-    setSearchQuery("");
-    toast.success("New cafe added to form");
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
-
-  const handleContributorSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setContributorSearchQuery(e.target.value);
-  };
-
-  const handleAddNewContributor = () => {
-    if (!contributorSearchQuery.trim()) {
-      toast.error("Please enter a contributor name");
-      return;
-    }
-
-    // Check if contributor already exists
-    const contributorExists = contributors.some(
-      (contributor) => contributor.toLowerCase() === contributorSearchQuery.toLowerCase()
-    );
-
-    if (contributorExists) {
-      toast.error("This contributor already exists in the list");
-      return;
-    }
-
-    updateFormData({ contributor_name: contributorSearchQuery.trim() });
-    setIsContributorDropdownOpen(false);
-    setContributorSearchQuery("");
-    toast.success("New contributor added to form");
-  };
-
   const isValidUrl = (url: string): boolean => {
     try {
       new URL(url);
@@ -250,17 +42,6 @@ const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
     } catch {
       return false;
     }
-  };
-
-  const isValidImageUrl = (url: string): boolean => {
-    if (!isValidUrl(url)) return false;
-    const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"];
-    const lowerUrl = url.toLowerCase();
-    return (
-      imageExtensions.some((ext) => lowerUrl.includes(ext)) ||
-      lowerUrl.includes("unsplash.com") ||
-      lowerUrl.includes("images.unsplash.com")
-    );
   };
 
   const isValidHours = (): boolean => {
@@ -275,8 +56,7 @@ const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
   const isFormValid = () => {
     return (
       formData.name.trim() !== "" &&
-      formData.cafe_photo.trim() !== "" &&
-      isValidImageUrl(formData.cafe_photo) &&
+      formData.cafe_photos_file.length > 0 &&
       formData.cafe_location_link.trim() !== "" &&
       isValidUrl(formData.cafe_location_link) &&
       formData.review.trim() !== "" &&
@@ -291,202 +71,16 @@ const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
 
   return (
     <div className="space-y-2.5">
-      {/* Contributor Name */}
-      <div>
-        <Label htmlFor="contributor_name">Contributor Name *</Label>
-        <div className="relative" ref={contributorDropdownRef}>
-          <Input
-            id="contributor_name"
-            placeholder="Select or add contributor name"
-            value={formData.contributor_name}
-            onChange={(e) => updateFormData({ contributor_name: e.target.value })}
-            onClick={() => setIsContributorDropdownOpen(!isContributorDropdownOpen)}
-            required
-            className="pr-10 cursor-pointer"
-            readOnly
-          />
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M6 9L12 15L18 9"
-                stroke="#746650"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-
-          {/* Dropdown */}
-          {isContributorDropdownOpen && (
-            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-              {/* Search Input */}
-              <div className="p-3 border-b border-gray-100">
-                <Input
-                  ref={contributorSearchInputRef}
-                  placeholder="Search existing contributors to avoid duplicates or add unique contributor name"
-                  value={contributorSearchQuery}
-                  onChange={handleContributorSearchChange}
-                  className="w-full"
-                  onKeyPress={(e) => e.key === "Enter" && handleAddNewContributor()}
-                />
-              </div>
-
-              {/* Existing Contributors List */}
-              <div className="max-h-40 overflow-y-auto">
-                {isContributorLoading ? (
-                  <div className="p-3 text-center text-sm text-gray-500">
-                    Loading contributors...
-                  </div>
-                ) : filteredContributors.length === 0 ? (
-                  <div className="p-3 text-center text-sm text-gray-500">
-                    {contributorSearchQuery.trim()
-                      ? "No existing contributors found matching your search"
-                      : "No existing contributors found"}
-                  </div>
-                ) : (
-                  <div className="p-2">
-                    <div className="text-xs text-gray-500 px-3 py-1 font-medium">
-                      Existing contributors:
-                    </div>
-                    {filteredContributors.map((contributor, index) => (
-                      <div
-                        key={index}
-                        onClick={() => {
-                          updateFormData({ contributor_name: contributor });
-                          setIsContributorDropdownOpen(false);
-                          setContributorSearchQuery("");
-                        }}
-                        className="w-full px-3 py-2 text-left text-sm text-[#746650] hover:bg-gray-100 cursor-pointer rounded transition-colors"
-                      >
-                        ✓ {contributor}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Add New Contributor Button */}
-              {contributorSearchQuery.trim() &&
-                !contributors.some(
-                  (contributor) =>
-                    contributor.toLowerCase() === contributorSearchQuery.toLowerCase()
-                ) && (
-                  <div className="p-3 border-t border-gray-100">
-                    <Button
-                      type="button"
-                      variant="cafe"
-                      size="sm"
-                      onClick={handleAddNewContributor}
-                      className="w-full"
-                    >
-                      Add "{contributorSearchQuery}"
-                    </Button>
-                  </div>
-                )}
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Cafe Name */}
       <div>
         <Label htmlFor="name">Cafe Name *</Label>
-        <div className="relative" ref={dropdownRef}>
-          <Input
-            id="name"
-            placeholder="Select or add cafe name"
-            value={formData.name}
-            onChange={(e) => updateFormData({ name: e.target.value })}
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            required
-            className="pr-10 cursor-pointer"
-            readOnly
-          />
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M6 9L12 15L18 9"
-                stroke="#746650"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-
-          {/* Dropdown */}
-          {isDropdownOpen && (
-            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-              {/* Search Input */}
-              <div className="p-3 border-b border-gray-100">
-                <Input
-                  ref={searchInputRef}
-                  placeholder="Search existing cafes to avoid duplicates or add unique cafe name"
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  className="w-full"
-                  onKeyPress={(e) => e.key === "Enter" && handleAddNewCafe()}
-                />
-              </div>
-
-              {/* Existing Cafes List (Reference Only) */}
-              <div className="max-h-40 overflow-y-auto">
-                {isLoading ? (
-                  <div className="p-3 text-center text-sm text-gray-500">Loading cafes...</div>
-                ) : filteredCafes.length === 0 ? (
-                  <div className="p-3 text-center text-sm text-gray-500">
-                    {searchQuery.trim()
-                      ? "No existing cafes found matching your search"
-                      : "No existing cafes found"}
-                  </div>
-                ) : (
-                  <div className="p-2">
-                    <div className="text-xs text-gray-500 px-3 py-1 font-medium">
-                      Existing cafes (for reference only):
-                    </div>
-                    {filteredCafes.map((cafe, index) => (
-                      <div
-                        key={index}
-                        className="w-full px-3 py-2 text-left text-sm text-gray-400 bg-gray-50 cursor-not-allowed"
-                      >
-                        ❌ {cafe.name} (already exists)
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Add New Cafe Button */}
-              {searchQuery.trim() &&
-                !cafes.some((cafe) => cafe.name.toLowerCase() === searchQuery.toLowerCase()) && (
-                  <div className="p-3 border-t border-gray-100">
-                    <Button
-                      type="button"
-                      variant="cafe"
-                      size="sm"
-                      onClick={handleAddNewCafe}
-                      className="w-full"
-                    >
-                      Add "{searchQuery}"
-                    </Button>
-                  </div>
-                )}
-            </div>
-          )}
-        </div>
+        <Input
+          id="name"
+          placeholder="Enter cafe name"
+          value={formData.name}
+          onChange={(e) => updateFormData({ name: e.target.value })}
+          required
+        />
       </div>
 
       {/* Cafe Location Area */}
@@ -539,7 +133,7 @@ const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
 
               {/* Locations List */}
               <div className="max-h-40 overflow-y-auto">
-                {isLocationLoading ? (
+                {isLocationsLoading ? (
                   <div className="p-3 text-center text-sm text-gray-500">Loading locations...</div>
                 ) : filteredLocations.length === 0 ? (
                   <div className="p-3 text-center text-sm text-gray-500">
@@ -575,26 +169,17 @@ const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
         </div>
       </div>
 
-      {/* Cafe Image */}
+      {/* Cafe Images */}
       <div>
-        <Label htmlFor="image">Cafe Image *</Label>
-        <Input
-          id="image"
-          placeholder="Enter image link"
-          value={formData.cafe_photo}
-          onChange={(e) => updateFormData({ cafe_photo: e.target.value })}
+        <FileUpload
+          id="cafe_photos"
+          label="Cafe Images"
+          accept="image/*"
+          value={formData.cafe_photos_file}
+          onChange={(files) => updateFormData({ cafe_photos_file: files })}
+          multiple
           required
-          className={
-            formData.cafe_photo.trim() !== "" && !isValidImageUrl(formData.cafe_photo)
-              ? "border-red-500"
-              : ""
-          }
         />
-        {formData.cafe_photo.trim() !== "" && !isValidImageUrl(formData.cafe_photo) && (
-          <p className="text-red-500 text-sm mt-1">
-            Please enter a valid image URL (e.g., .jpg, .png, .gif, .webp, .svg or Unsplash link)
-          </p>
-        )}
       </div>
 
       {/* Cafe Location Link */}
@@ -689,6 +274,18 @@ const AddBasicInfo: React.FC<AddBasicInfoProps> = ({ onNext }) => {
           value={formData.review}
           onChange={(e) => updateFormData({ review: e.target.value })}
           rows={4}
+          required
+        />
+      </div>
+
+      {/* Contributor Name */}
+      <div>
+        <Label htmlFor="contributor_name">Contributor Name *</Label>
+        <Input
+          id="contributor_name"
+          placeholder="Enter your name"
+          value={formData.contributor_name}
+          onChange={(e) => updateFormData({ contributor_name: e.target.value })}
           required
         />
       </div>

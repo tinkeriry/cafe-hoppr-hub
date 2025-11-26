@@ -18,24 +18,11 @@ import Smile from "@/components/icons/Smile";
 import Park from "@/components/icons/Park";
 import ThreeDots from "@/components/icons/ThreeDots";
 import { MapPin, CircleDot, XCircle } from "lucide-react";
-import { Review } from "@/integrations/server/types";
+import { Cafe, Review } from "@/integrations/server/types";
+import { formatPhotoUrl } from "@/lib/utils";
 
 interface CafeCardProps {
-  cafe: {
-    cafe_id: string;
-    name: string;
-    cafe_photo: string;
-    cafe_location_link: string;
-    location_id?: string;
-    location_name?: string;
-    operational_days?: string[];
-    opening_hour?: string;
-    closing_hour?: string;
-    reviews?: Review[];
-    status: string;
-    created_at: string;
-    updated_at: string;
-  };
+  cafe: Cafe;
   onEdit: () => void;
   onDelete: () => void;
   onAddReview: () => void;
@@ -54,6 +41,22 @@ const CafeCard = ({ cafe, onEdit, onDelete, onAddReview }: CafeCardProps) => {
   const handleImageError = () => {
     setImageError(true);
   };
+
+  // Helper to get location name
+  const locationName = cafe.locations?.name || cafe.location?.name;
+
+  // Get the primary photo or first photo from the photos array
+  const getPrimaryPhoto = () => {
+    if (cafe.photos && cafe.photos.length > 0) {
+      const primaryPhoto = cafe.photos.find((photo) => photo.is_primary);
+      const photoPath = primaryPhoto?.photo_url || cafe.photos[0].photo_url;
+      return formatPhotoUrl(photoPath);
+    }
+    // Fallback to deprecated cafe_photo field for backward compatibility
+    return formatPhotoUrl(cafe.cafe_photo);
+  };
+
+  const cafePhotoUrl = getPrimaryPhoto();
 
   // Check if cafe is currently open
   const isCafeOpen = () => {
@@ -269,7 +272,7 @@ const CafeCard = ({ cafe, onEdit, onDelete, onAddReview }: CafeCardProps) => {
       onTouchEnd={handleTouchEnd}
     >
       <div className="relative">
-        {imageError || !cafe.cafe_photo ? (
+        {imageError || !cafePhotoUrl ? (
           <div className="w-full h-[240px] bg-gradient-to-br from-[#e5d8c2] to-[#d4c4a8] flex items-center justify-center rounded-t-3xl">
             <div className="text-center">
               <div className="text-6xl mb-2">☕</div>
@@ -278,7 +281,7 @@ const CafeCard = ({ cafe, onEdit, onDelete, onAddReview }: CafeCardProps) => {
           </div>
         ) : (
           <img
-            src={cafe.cafe_photo}
+            src={cafePhotoUrl}
             alt={cafe.name}
             className="w-full h-[240px] object-cover rounded-t-3xl"
             onError={handleImageError}
@@ -355,10 +358,10 @@ const CafeCard = ({ cafe, onEdit, onDelete, onAddReview }: CafeCardProps) => {
         )}
 
         {/* Location Badge - Bottom Right */}
-        {cafe.location_name && (
+        {locationName && (
           <div className="absolute bottom-3 right-3 flex items-center gap-1 px-3 py-1.5 bg-white rounded-full shadow-sm">
             <MapPin className="w-4 h-4 text-[#604926]" />
-            <span className="text-sm font-semibold text-[#604926]">{cafe.location_name}</span>
+            <span className="text-sm font-semibold text-[#604926]">{locationName}</span>
           </div>
         )}
       </div>

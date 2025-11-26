@@ -226,9 +226,9 @@ const Index = () => {
       {/* Navbar */}
       <nav className="bg-white shadow-[inset_0_-8px_8px_rgba(248,246,244,0.8)] px-4 py-3 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex justify-end">
-          <Button variant="cafe" onClick={handleAddCafe} className="text-sm">
+          {/* <Button variant="cafe" onClick={handleAddCafe} className="text-sm">
             Add Cafe
-          </Button>
+          </Button> */}
         </div>
       </nav>
 
@@ -408,9 +408,9 @@ const Index = () => {
               <p className="text-xl text-muted-foreground mb-8">
                 Whoops! Nothing here yet. Try add some!
               </p>
-              <Button variant="cafe" onClick={handleAddCafe}>
+              {/* <Button variant="cafe" onClick={handleAddCafe}>
                 Add Cafe
-              </Button>
+              </Button> */}
             </div>
           ) : (
             <>

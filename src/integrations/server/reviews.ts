@@ -1,5 +1,5 @@
 import apiClient from "@/integrations/server/client";
-import { Review } from "@/integrations/server/types";
+import { ApiResponse, Review } from "@/integrations/server/types";
 
 // Reviews API wrapper
 export async function listReviewsByCafe(cafeId: string): Promise<Review[]> {
@@ -31,45 +31,28 @@ export async function listReviewsByCafe(cafeId: string): Promise<Review[]> {
   }
 }
 
-export async function listContributors(): Promise<string[]> {
+// Create a new review (add_review token required)
+export async function createReview(payload: {
+  token: string;
+  cafe_id: string;
+  reviewer_name: string;
+  review: string;
+  price?: number;
+  wifi?: number;
+  seat_comfort?: number;
+  electricity_socket?: number;
+  food_beverage?: number;
+  praying_room?: number;
+  hospitality?: number;
+  toilet?: number;
+  noise?: number;
+  parking?: number;
+}): Promise<ApiResponse<Review>> {
   try {
-    const { data } = await apiClient.get<string[]>("/reviews/contributors");
+    const { data } = await apiClient.post("/reviews", payload);
     return data;
   } catch (err) {
-    return ["Guest", "Anonymous"];
-  }
-}
-
-export type ReviewCreatePayload = Omit<Review, "review_id" | "created_at" | "updated_at"> & {
-  created_at?: string;
-  updated_at?: string;
-};
-
-export async function createReview(payload: ReviewCreatePayload): Promise<string> {
-  try {
-    const { data } = await apiClient.post<{ review_id: string }>("/reviews", payload);
-    return data.review_id;
-  } catch (err) {
-    return crypto.randomUUID();
-  }
-}
-
-export type ReviewUpdatePayload = Partial<Omit<Review, "review_id" | "cafe_id" | "created_at">> & {
-  updated_at?: string;
-};
-
-export async function updateReview(reviewId: string, payload: ReviewUpdatePayload): Promise<void> {
-  try {
-    await apiClient.put(`/reviews/${reviewId}`, payload);
-  } catch (err) {
-    // no-op for dummy
-  }
-}
-
-export async function deleteReview(reviewId: string): Promise<void> {
-  try {
-    await apiClient.delete(`/reviews/${reviewId}`);
-  } catch (err) {
-    // no-op for dummy
+    console.error("Error creating review:", err);
+    throw err;
   }
 }
